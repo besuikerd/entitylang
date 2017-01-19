@@ -1,0 +1,21 @@
+entity Student{
+  name: String
+  name2: String
+  assignmentNames: String* = name + name2 + submissions.grade
+}
+
+entity Assignment{
+  name: String
+  minimum: Float
+}
+
+entity Submission{
+  grade: Float
+  pass: Float = grade >= assignment.minimum && childPass
+  childPass: Boolean = children.pass
+}
+
+
+relation Submission.assignment 1 <-> * Assignment.submissions
+relation Student.submissions * <-> 1 Submission.student
+relation Submission.parent 1 <-> * Submission.children

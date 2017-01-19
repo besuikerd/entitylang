@@ -1,0 +1,34 @@
+module Model
+
+imports
+  Common
+  Type
+  Expression
+  
+  
+context-free syntax
+  
+  Model.Entity = <
+    entity <ID> {
+      <{Member "\n"}*>
+    }
+  >
+  
+  Model.Relation = [
+    relation [EntityRef].[AttributeRef] [Multiplicity] <-> [Multiplicity] [EntityRef].[AttributeRef]
+  ]
+  
+  Member = Attribute
+  
+  Attribute.Attribute = <<ID> : <PrimitiveType>>
+  Attribute.DerivedAttribute = <<ID> : <PrimitiveType><Multiplicity?> = <Exp>>
+  
+  
+  
+  EntityRef.EntityRef = ID
+  AttributeRef.AttributeRef = ID
+  
+  Multiplicity.One = <1>
+  Multiplicity.ZeroOrMore = <*>
+  Multiplicity.OneOrMore = <+>
+  Multiplicity.ZeroOrOne = <?>

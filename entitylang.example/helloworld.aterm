@@ -1,0 +1,61 @@
+Start(
+  [ Entity(
+      "Student"
+    , [ Attribute("name", String())
+      , Attribute("name2", String())
+      , DerivedAttribute(
+          "assignmentNames"
+        , String()
+        , Some(ZeroOrMore())
+        , Addition(
+            Addition(Ref("name"), Ref("name2"))
+          , MemberAccess(Ref("submissions"), "grade")
+          )
+        )
+      ]
+    )
+  , Entity(
+      "Assignment"
+    , [Attribute("name", String()), Attribute("minimum", Float())]
+    )
+  , Entity(
+      "Submission"
+    , [ Attribute("grade", Float())
+      , DerivedAttribute(
+          "pass"
+        , Float()
+        , None()
+        , And(
+            GreaterThanEqual(Ref("grade"), MemberAccess(Ref("assignment"), "minimum"))
+          , Ref("childPass")
+          )
+        )
+      , DerivedAttribute("childPass", Boolean(), None(), MemberAccess(Ref("children"), "pass"))
+      ]
+    )
+  , Relation(
+      EntityRef("Submission")
+    , AttributeRef("assignment")
+    , One()
+    , ZeroOrMore()
+    , EntityRef("Assignment")
+    , AttributeRef("submissions")
+    )
+  , Relation(
+      EntityRef("Student")
+    , AttributeRef("submissions")
+    , ZeroOrMore()
+    , One()
+    , EntityRef("Submission")
+    , AttributeRef("student")
+    )
+  , Relation(
+      EntityRef("Submission")
+    , AttributeRef("parent")
+    , One()
+    , ZeroOrMore()
+    , EntityRef("Submission")
+    , AttributeRef("children")
+    )
+  ]
+)

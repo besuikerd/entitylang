@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<site>
+   <feature url="features/entitylang.eclipse.feature_0.1.0.qualifier.jar" id="entitylang.eclipse.feature" version="0.1.0.qualifier">
+      <category name="entitylang"/>
+   </feature>
+   <category-def name="entitylang" label="entitylang language Eclipse plugin">
+      <description>
+         entitylang language Eclipse plugin.
+      </description>
+   </category-def>
+</site>

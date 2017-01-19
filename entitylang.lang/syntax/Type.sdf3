@@ -1,0 +1,13 @@
+module Type
+
+imports
+  Common
+  
+context-free syntax
+
+  Type = PrimitiveType
+  
+  PrimitiveType.Boolean = <Boolean>
+  PrimitiveType.Int = <Int>
+  PrimitiveType.Float = <Float>
+  PrimitiveType.String = <String>

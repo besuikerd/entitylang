@@ -1,0 +1,7 @@
+.metadata/
+.idea/
+.settings/
+.project
+*.iml
+.classpath
+

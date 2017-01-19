@@ -1,0 +1,7 @@
+---
+id: org.metaborg:entitylang.example:0.1.0-SNAPSHOT
+name: entitylang
+dependencies:
+  compile:
+build:
+  useBuildSystemSpec: true
