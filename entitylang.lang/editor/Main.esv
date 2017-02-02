@@ -3,6 +3,7 @@ module Main
 imports
   Syntax
   Analysis
+  Services
 
 language
 

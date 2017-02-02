@@ -1,7 +1,7 @@
 entity Student{
   name: String
   name2: String
-  assignmentNames: String* = name + name2 + submissions.grade
+  assignmentNames: String = name + name2 + submissions.childPass
 }
 
 entity Assignment{
@@ -11,10 +11,8 @@ entity Assignment{
 
 entity Submission{
   grade: Float
-  pass: Float = grade >= assignment.minimum && childPass
-  childPass: Boolean = children.pass
+  pass: Boolean = grade >= assignment.minimum && childPass
 }
-
 
 relation Submission.assignment 1 <-> * Assignment.submissions
 relation Student.submissions * <-> 1 Submission.student

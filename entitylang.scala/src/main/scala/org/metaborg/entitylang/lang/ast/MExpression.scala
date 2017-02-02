@@ -106,6 +106,9 @@ object MExpression {
         case And2.fromSTerm(exp1) => scala.Some(exp1)
         case Or2.fromSTerm(exp1) => scala.Some(exp1)
         case If3.fromSTerm(exp1) => scala.Some(exp1)
+        case Merge2.fromSTerm(exp1) => scala.Some(exp1)
+        case ChoiceLeft2.fromSTerm(exp1) => scala.Some(exp1)
+        case Apply2.fromSTerm(exp1) => scala.Some(exp1)
         case Ref1.fromSTerm(exp1) => scala.Some(exp1)
         case This0.fromSTerm(exp1) => scala.Some(exp1)
         case SLiteral.fromSTerm(_1) => scala.Some(_1)
@@ -301,6 +304,42 @@ object MExpression {
         override def unapply(term: STerm): Option[If3] = term match {
           case STerm.Cons("If", scala.Seq(SExp.fromSTerm(exp1), SExp.fromSTerm(exp2), SExp.fromSTerm(exp3)), scala.Some(origin)) =>
             scala.Some(If3(exp1, exp2, exp3, origin))
+          case _ => None
+        }
+      }
+    }
+    case class Merge2(exp1: SExp, exp2: SExp, origin: scalaterms.Origin) extends SExp {
+      override def toSTerm = STerm.Cons("Merge", scala.Seq(exp1.toSTerm, exp2.toSTerm), scala.Some(origin))
+    }
+    object Merge2 extends scalaterms.TermLikeCompanion[Merge2] {
+      override val fromSTerm: scalaterms.FromSTerm[Merge2] = new scalaterms.FromSTerm[Merge2] {
+        override def unapply(term: STerm): Option[Merge2] = term match {
+          case STerm.Cons("Merge", scala.Seq(SExp.fromSTerm(exp1), SExp.fromSTerm(exp2)), scala.Some(origin)) =>
+            scala.Some(Merge2(exp1, exp2, origin))
+          case _ => None
+        }
+      }
+    }
+    case class ChoiceLeft2(exp1: SExp, exp2: SExp, origin: scalaterms.Origin) extends SExp {
+      override def toSTerm = STerm.Cons("ChoiceLeft", scala.Seq(exp1.toSTerm, exp2.toSTerm), scala.Some(origin))
+    }
+    object ChoiceLeft2 extends scalaterms.TermLikeCompanion[ChoiceLeft2] {
+      override val fromSTerm: scalaterms.FromSTerm[ChoiceLeft2] = new scalaterms.FromSTerm[ChoiceLeft2] {
+        override def unapply(term: STerm): Option[ChoiceLeft2] = term match {
+          case STerm.Cons("ChoiceLeft", scala.Seq(SExp.fromSTerm(exp1), SExp.fromSTerm(exp2)), scala.Some(origin)) =>
+            scala.Some(ChoiceLeft2(exp1, exp2, origin))
+          case _ => None
+        }
+      }
+    }
+    case class Apply2(exp1: SExp, exp2: STerm.List[SExp], origin: scalaterms.Origin) extends SExp {
+      override def toSTerm = STerm.Cons("Apply", scala.Seq(exp1.toSTerm, exp2.toSTerm), scala.Some(origin))
+    }
+    object Apply2 extends scalaterms.TermLikeCompanion[Apply2] {
+      override val fromSTerm: scalaterms.FromSTerm[Apply2] = new scalaterms.FromSTerm[Apply2] {
+        override def unapply(term: STerm): Option[Apply2] = term match {
+          case STerm.Cons("Apply", scala.Seq(SExp.fromSTerm(exp1), SExp.fromSTerm.list(exp2)), scala.Some(origin)) =>
+            scala.Some(Apply2(exp1, exp2, origin))
           case _ => None
         }
       }

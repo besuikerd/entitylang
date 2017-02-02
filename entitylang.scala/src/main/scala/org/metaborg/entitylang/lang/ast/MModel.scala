@@ -15,10 +15,10 @@ object MModel {
   // Sort definitions
   sealed trait SModel extends sdf.Constructor
   sealed trait SMember extends sdf.Constructor
+  sealed trait SOptionalType extends sdf.Constructor
   sealed trait SAttribute extends sdf.Constructor with SMember
   sealed trait SEntityRef extends sdf.Constructor
   sealed trait SAttributeRef extends sdf.Constructor
-  sealed trait SMultiplicity extends sdf.Constructor
   // Constructor definitions
   object SModel extends scalaterms.TermLikeCompanion[SModel] {
     override val fromSTerm: scalaterms.FromSTerm[SModel] = new scalaterms.FromSTerm[SModel] {
@@ -64,35 +64,69 @@ object MModel {
 
 
   }
-  object SAttribute extends scalaterms.TermLikeCompanion[SAttribute] {
-    override val fromSTerm: scalaterms.FromSTerm[SAttribute] = new scalaterms.FromSTerm[SAttribute] {
-      override def unapply(term: STerm): Option[SAttribute] = term match {
-        case Attribute2.fromSTerm(attribute1) => scala.Some(attribute1)
-        case DerivedAttribute4.fromSTerm(attribute1) => scala.Some(attribute1)
+  object SOptionalType extends scalaterms.TermLikeCompanion[SOptionalType] {
+    override val fromSTerm: scalaterms.FromSTerm[SOptionalType] = new scalaterms.FromSTerm[SOptionalType] {
+      override def unapply(term: STerm): Option[SOptionalType] = term match {
+        case ExplicitType1.fromSTerm(optionaltype1) => scala.Some(optionaltype1)
+        case DerivedType0.fromSTerm(optionaltype1) => scala.Some(optionaltype1)
         case _ => scala.None
       }
     }
 
-    case class Attribute2(id1: SID, primitivetype2: SPrimitiveType, origin: scalaterms.Origin) extends SAttribute {
-      override def toSTerm = STerm.Cons("Attribute", scala.Seq(id1.toSTerm, primitivetype2.toSTerm), scala.Some(origin))
+    case class ExplicitType1(primitivetypewithmultiplicity1: SPrimitiveTypeWithMultiplicity, origin: scalaterms.Origin) extends SOptionalType {
+      override def toSTerm = STerm.Cons("ExplicitType", scala.Seq(primitivetypewithmultiplicity1.toSTerm), scala.Some(origin))
     }
-    object Attribute2 extends scalaterms.TermLikeCompanion[Attribute2] {
-      override val fromSTerm: scalaterms.FromSTerm[Attribute2] = new scalaterms.FromSTerm[Attribute2] {
-        override def unapply(term: STerm): Option[Attribute2] = term match {
-          case STerm.Cons("Attribute", scala.Seq(SID.fromSTerm(id1), SPrimitiveType.fromSTerm(primitivetype2)), scala.Some(origin)) =>
-            scala.Some(Attribute2(id1, primitivetype2, origin))
+    object ExplicitType1 extends scalaterms.TermLikeCompanion[ExplicitType1] {
+      override val fromSTerm: scalaterms.FromSTerm[ExplicitType1] = new scalaterms.FromSTerm[ExplicitType1] {
+        override def unapply(term: STerm): Option[ExplicitType1] = term match {
+          case STerm.Cons("ExplicitType", scala.Seq(SPrimitiveTypeWithMultiplicity.fromSTerm(primitivetypewithmultiplicity1)), scala.Some(origin)) =>
+            scala.Some(ExplicitType1(primitivetypewithmultiplicity1, origin))
           case _ => None
         }
       }
     }
-    case class DerivedAttribute4(id1: SID, primitivetype2: SPrimitiveType, multiplicity3: sdf.Option[SMultiplicity], exp4: SExp, origin: scalaterms.Origin) extends SAttribute {
-      override def toSTerm = STerm.Cons("DerivedAttribute", scala.Seq(id1.toSTerm, primitivetype2.toSTerm, multiplicity3.toSTerm, exp4.toSTerm), scala.Some(origin))
+    case class DerivedType0(origin: scalaterms.Origin) extends SOptionalType {
+      override def toSTerm = STerm.Cons("DerivedType", scala.Seq(), scala.Some(origin))
     }
-    object DerivedAttribute4 extends scalaterms.TermLikeCompanion[DerivedAttribute4] {
-      override val fromSTerm: scalaterms.FromSTerm[DerivedAttribute4] = new scalaterms.FromSTerm[DerivedAttribute4] {
-        override def unapply(term: STerm): Option[DerivedAttribute4] = term match {
-          case STerm.Cons("DerivedAttribute", scala.Seq(SID.fromSTerm(id1), SPrimitiveType.fromSTerm(primitivetype2), SMultiplicity.fromSTerm.option(multiplicity3), SExp.fromSTerm(exp4)), scala.Some(origin)) =>
-            scala.Some(DerivedAttribute4(id1, primitivetype2, multiplicity3, exp4, origin))
+    object DerivedType0 extends scalaterms.TermLikeCompanion[DerivedType0] {
+      override val fromSTerm: scalaterms.FromSTerm[DerivedType0] = new scalaterms.FromSTerm[DerivedType0] {
+        override def unapply(term: STerm): Option[DerivedType0] = term match {
+          case STerm.Cons("DerivedType", scala.Seq(), scala.Some(origin)) =>
+            scala.Some(DerivedType0(origin))
+          case _ => None
+        }
+      }
+    }
+  }
+  object SAttribute extends scalaterms.TermLikeCompanion[SAttribute] {
+    override val fromSTerm: scalaterms.FromSTerm[SAttribute] = new scalaterms.FromSTerm[SAttribute] {
+      override def unapply(term: STerm): Option[SAttribute] = term match {
+        case Attribute2.fromSTerm(attribute1) => scala.Some(attribute1)
+        case DerivedAttribute3.fromSTerm(attribute1) => scala.Some(attribute1)
+        case _ => scala.None
+      }
+    }
+
+    case class Attribute2(id1: SID, primitivetypewithmultiplicity2: SPrimitiveTypeWithMultiplicity, origin: scalaterms.Origin) extends SAttribute {
+      override def toSTerm = STerm.Cons("Attribute", scala.Seq(id1.toSTerm, primitivetypewithmultiplicity2.toSTerm), scala.Some(origin))
+    }
+    object Attribute2 extends scalaterms.TermLikeCompanion[Attribute2] {
+      override val fromSTerm: scalaterms.FromSTerm[Attribute2] = new scalaterms.FromSTerm[Attribute2] {
+        override def unapply(term: STerm): Option[Attribute2] = term match {
+          case STerm.Cons("Attribute", scala.Seq(SID.fromSTerm(id1), SPrimitiveTypeWithMultiplicity.fromSTerm(primitivetypewithmultiplicity2)), scala.Some(origin)) =>
+            scala.Some(Attribute2(id1, primitivetypewithmultiplicity2, origin))
+          case _ => None
+        }
+      }
+    }
+    case class DerivedAttribute3(id1: SID, optionaltype2: SOptionalType, exp3: SExp, origin: scalaterms.Origin) extends SAttribute {
+      override def toSTerm = STerm.Cons("DerivedAttribute", scala.Seq(id1.toSTerm, optionaltype2.toSTerm, exp3.toSTerm), scala.Some(origin))
+    }
+    object DerivedAttribute3 extends scalaterms.TermLikeCompanion[DerivedAttribute3] {
+      override val fromSTerm: scalaterms.FromSTerm[DerivedAttribute3] = new scalaterms.FromSTerm[DerivedAttribute3] {
+        override def unapply(term: STerm): Option[DerivedAttribute3] = term match {
+          case STerm.Cons("DerivedAttribute", scala.Seq(SID.fromSTerm(id1), SOptionalType.fromSTerm(optionaltype2), SExp.fromSTerm(exp3)), scala.Some(origin)) =>
+            scala.Some(DerivedAttribute3(id1, optionaltype2, exp3, origin))
           case _ => None
         }
       }
@@ -135,66 +169,6 @@ object MModel {
         override def unapply(term: STerm): Option[AttributeRef1] = term match {
           case STerm.Cons("AttributeRef", scala.Seq(SID.fromSTerm(id1)), scala.Some(origin)) =>
             scala.Some(AttributeRef1(id1, origin))
-          case _ => None
-        }
-      }
-    }
-  }
-  object SMultiplicity extends scalaterms.TermLikeCompanion[SMultiplicity] {
-    override val fromSTerm: scalaterms.FromSTerm[SMultiplicity] = new scalaterms.FromSTerm[SMultiplicity] {
-      override def unapply(term: STerm): Option[SMultiplicity] = term match {
-        case One0.fromSTerm(multiplicity1) => scala.Some(multiplicity1)
-        case ZeroOrMore0.fromSTerm(multiplicity1) => scala.Some(multiplicity1)
-        case OneOrMore0.fromSTerm(multiplicity1) => scala.Some(multiplicity1)
-        case ZeroOrOne0.fromSTerm(multiplicity1) => scala.Some(multiplicity1)
-        case _ => scala.None
-      }
-    }
-
-    case class One0(origin: scalaterms.Origin) extends SMultiplicity {
-      override def toSTerm = STerm.Cons("One", scala.Seq(), scala.Some(origin))
-    }
-    object One0 extends scalaterms.TermLikeCompanion[One0] {
-      override val fromSTerm: scalaterms.FromSTerm[One0] = new scalaterms.FromSTerm[One0] {
-        override def unapply(term: STerm): Option[One0] = term match {
-          case STerm.Cons("One", scala.Seq(), scala.Some(origin)) =>
-            scala.Some(One0(origin))
-          case _ => None
-        }
-      }
-    }
-    case class ZeroOrMore0(origin: scalaterms.Origin) extends SMultiplicity {
-      override def toSTerm = STerm.Cons("ZeroOrMore", scala.Seq(), scala.Some(origin))
-    }
-    object ZeroOrMore0 extends scalaterms.TermLikeCompanion[ZeroOrMore0] {
-      override val fromSTerm: scalaterms.FromSTerm[ZeroOrMore0] = new scalaterms.FromSTerm[ZeroOrMore0] {
-        override def unapply(term: STerm): Option[ZeroOrMore0] = term match {
-          case STerm.Cons("ZeroOrMore", scala.Seq(), scala.Some(origin)) =>
-            scala.Some(ZeroOrMore0(origin))
-          case _ => None
-        }
-      }
-    }
-    case class OneOrMore0(origin: scalaterms.Origin) extends SMultiplicity {
-      override def toSTerm = STerm.Cons("OneOrMore", scala.Seq(), scala.Some(origin))
-    }
-    object OneOrMore0 extends scalaterms.TermLikeCompanion[OneOrMore0] {
-      override val fromSTerm: scalaterms.FromSTerm[OneOrMore0] = new scalaterms.FromSTerm[OneOrMore0] {
-        override def unapply(term: STerm): Option[OneOrMore0] = term match {
-          case STerm.Cons("OneOrMore", scala.Seq(), scala.Some(origin)) =>
-            scala.Some(OneOrMore0(origin))
-          case _ => None
-        }
-      }
-    }
-    case class ZeroOrOne0(origin: scalaterms.Origin) extends SMultiplicity {
-      override def toSTerm = STerm.Cons("ZeroOrOne", scala.Seq(), scala.Some(origin))
-    }
-    object ZeroOrOne0 extends scalaterms.TermLikeCompanion[ZeroOrOne0] {
-      override val fromSTerm: scalaterms.FromSTerm[ZeroOrOne0] = new scalaterms.FromSTerm[ZeroOrOne0] {
-        override def unapply(term: STerm): Option[ZeroOrOne0] = term match {
-          case STerm.Cons("ZeroOrOne", scala.Seq(), scala.Some(origin)) =>
-            scala.Some(ZeroOrOne0(origin))
           case _ => None
         }
       }

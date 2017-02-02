@@ -3,6 +3,9 @@ module Expression
 imports
   Common
   
+context-free start-symbols
+  Exp
+  
 context-free syntax
 
 
@@ -26,7 +29,10 @@ context-free syntax
   Exp.And                = <<Exp> && <Exp>>        {left}
   Exp.Or                 = <<Exp> || <Exp>>        {left}
   Exp.If                 = <if(<Exp>) <Exp> else <Exp>> {right}
+  Exp.Merge              = <<Exp> ++ <Exp>>        {left}
+  Exp.ChoiceLeft         = [[Exp] <+ [Exp]]        {left}
 
+  Exp.Apply              = <<Exp>(<Exp*>)>           {left}
 
   Exp = Literal
   Literal.Int = INT
@@ -40,6 +46,10 @@ context-free syntax
   
 context-free priorities
 
+
+  { left:
+    Exp.Apply
+  } >
   { left:
     Exp.MemberAccess
   } >  
@@ -73,4 +83,10 @@ context-free priorities
   } >
   { right:
     Exp.If
+  } >
+  { left:
+    Exp.Merge
+  } >
+  { left:
+    Exp.ChoiceLeft
   }

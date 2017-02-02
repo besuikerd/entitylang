@@ -7,7 +7,18 @@ context-free syntax
 
   Type = PrimitiveType
   
+  TypeWithMultiplicity.TypeWithMultiplicity = <<Type><Multiplicity>>
+  TypeWithMultiplicity.TypeWithDefaultMultiplicity = Type
+  
+  PrimitiveTypeWithMultiplicity.PrimitiveTypeWithMultiplicity = <<PrimitiveType><Multiplicity>>
+  PrimitiveTypeWithMultiplicity.PrimitiveTypeWithDefaultMultiplicity = PrimitiveType
+  
   PrimitiveType.Boolean = <Boolean>
   PrimitiveType.Int = <Int>
   PrimitiveType.Float = <Float>
   PrimitiveType.String = <String>
+
+  Multiplicity.One          = <1>
+  Multiplicity.ZeroOrOne    = <?>
+  Multiplicity.ZeroOrMore   = <*> 
+  Multiplicity.OneOrMore    = <+>

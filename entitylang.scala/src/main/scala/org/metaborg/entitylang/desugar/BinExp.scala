@@ -4,24 +4,26 @@ import org.metaborg.entitylang.lang.ast.MExpression.SExp
 import org.metaborg.entitylang.lang.ast.MExpression.SExp._
 
 
-sealed trait BinaryOperand
+sealed trait BinaryOperator
 
-case object Add extends BinaryOperand
-case object Sub extends BinaryOperand
-case object Mul extends BinaryOperand
-case object Div extends BinaryOperand
-case object Mod extends BinaryOperand
-case object LessThan extends BinaryOperand
-case object LessThanEqual extends BinaryOperand
-case object GreaterThan extends BinaryOperand
-case object GreaterThanEqual extends BinaryOperand
-case object Equal extends BinaryOperand
-case object Inequal extends BinaryOperand
-case object And extends BinaryOperand
-case object Or extends BinaryOperand
+case object Add extends BinaryOperator
+case object Sub extends BinaryOperator
+case object Mul extends BinaryOperator
+case object Div extends BinaryOperator
+case object Mod extends BinaryOperator
+case object LessThan extends BinaryOperator
+case object LessThanEqual extends BinaryOperator
+case object GreaterThan extends BinaryOperator
+case object GreaterThanEqual extends BinaryOperator
+case object Equal extends BinaryOperator
+case object Inequal extends BinaryOperator
+case object And extends BinaryOperator
+case object Or extends BinaryOperator
+case object Merge extends BinaryOperator
+case object ChoiceLeft extends BinaryOperator
 
 object BinExp{
-  def unapply(e: SExp): Option[(BinaryOperand, SExp, SExp)] = e match {
+  def unapply(e: SExp): Option[(BinaryOperator, SExp, SExp)] = e match {
     case Multiplication2(exp1, exp2, origin) => Some((Mul, exp1, exp2))
     case Division2(exp1, exp2, origin) => Some((Div, exp1, exp2))
     case Modulo2(exp1, exp2, origin) => Some((Mod, exp1, exp2))
@@ -35,6 +37,8 @@ object BinExp{
     case Inequal2(exp1, exp2, origin) => Some((Inequal, exp1, exp2))
     case And2(exp1, exp2, origin) => Some((And, exp1, exp2))
     case Or2(exp1, exp2, origin) => Some((Or, exp1, exp2))
+    case Merge2(exp1, exp2, origin) => Some((Merge, exp1, exp2))
+    case ChoiceLeft2(exp1, exp2, origin) => Some((ChoiceLeft, exp1, exp2))
     case _ => None
   }
 }

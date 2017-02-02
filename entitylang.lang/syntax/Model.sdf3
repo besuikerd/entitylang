@@ -20,15 +20,14 @@ context-free syntax
   
   Member = Attribute
   
-  Attribute.Attribute = <<ID> : <PrimitiveType>>
-  Attribute.DerivedAttribute = <<ID> : <PrimitiveType><Multiplicity?> = <Exp>>
+  OptionalType.ExplicitType = <: <PrimitiveTypeWithMultiplicity>>
+  OptionalType.DerivedType = 
+  
+  
+  Attribute.Attribute = <<ID> : <PrimitiveTypeWithMultiplicity>>
+  Attribute.DerivedAttribute = <<ID> <OptionalType> = <Exp>>
   
   
   
   EntityRef.EntityRef = ID
   AttributeRef.AttributeRef = ID
-  
-  Multiplicity.One = <1>
-  Multiplicity.ZeroOrMore = <*>
-  Multiplicity.OneOrMore = <+>
-  Multiplicity.ZeroOrOne = <?>

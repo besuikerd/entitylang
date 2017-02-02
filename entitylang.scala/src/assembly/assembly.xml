@@ -9,10 +9,19 @@
     <dependencySet>
       <outputDirectory></outputDirectory>
       <unpack>true</unpack>
+      <scope>provided</scope>
+      <useTransitiveDependencies>true</useTransitiveDependencies>
+      <excludes>
+        <exclude>org.metaborg:*:*</exclude>
+      </excludes>
+    </dependencySet>
+    <dependencySet>
+      <outputDirectory></outputDirectory>
+      <unpack>true</unpack>
+      <scope>provided</scope>
       <includes>
-        <include>org.metaborg:entitylang.scala:*</include>
         <include>org.metaborg:scalaterms:*</include>
-        <include>org.scala-lang:scala-library:*</include>
+        <include>org.metaborg:entitylang.scala:*</include>
       </includes>
     </dependencySet>
   </dependencySets>

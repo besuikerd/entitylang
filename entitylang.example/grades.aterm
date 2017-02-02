@@ -1,32 +1,21 @@
 Start(
-  [ Entity(
-      "Student"
-    , [ Attribute("name", String())
-      , Attribute("name2", String())
-      , DerivedAttribute("x", DerivedType(), Ref("a"))
-      , DerivedAttribute(
-          "assignmentNames"
-        , ExplicitType(PrimitiveTypeWithDefaultMultiplicity(String()))
-        , Addition(
-            Addition(Ref("name"), Ref("name2"))
-          , MemberAccess(Ref("submissions"), "childPass")
-          )
-        )
-      ]
-    )
+  [ Entity("Student", [Attribute("name", PrimitiveTypeWithDefaultMultiplicity(String()))])
   , Entity(
       "Assignment"
-    , [Attribute("name", String()), Attribute("minimum", Float())]
+    , [Attribute("name", PrimitiveTypeWithDefaultMultiplicity(String())), Attribute("minimum", PrimitiveTypeWithMultiplicity(Float(), ZeroOrOne()))]
     )
   , Entity(
       "Submission"
-    , [ Attribute("grade", Float())
+    , [ Attribute("grade", PrimitiveTypeWithDefaultMultiplicity(Float()))
       , DerivedAttribute(
           "pass"
         , ExplicitType(PrimitiveTypeWithDefaultMultiplicity(Boolean()))
-        , And(
-            GreaterThanEqual(Ref("grade"), MemberAccess(Ref("assignment"), "minimum"))
-          , Ref("childPass")
+        , ChoiceLeft(
+            And(
+              GreaterThanEqual(Ref("grade"), MemberAccess(Ref("assignment"), "minimum"))
+            , Apply(Ref("forall"), [MemberAccess(Ref("children"), "pass")])
+            )
+          , False()
           )
         )
       ]

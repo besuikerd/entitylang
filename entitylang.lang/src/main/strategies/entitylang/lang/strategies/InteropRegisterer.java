@@ -8,7 +8,9 @@ public class InteropRegisterer extends JavaInteropRegisterer {
         super(new Strategy[] {
           editor_analyze_0_0.instance,
           editor_hover_0_0.instance,
-          editor_resolve_0_0.instance
+          editor_resolve_0_0.instance,
+          start_graph_service_0_0.instance,
+          stop_graph_service_0_0.instance
         });
     }
 }

@@ -9,6 +9,7 @@
 
   <properties>
     <scala.version>2.11.8</scala.version>
+    <skipTests>true</skipTests>
   </properties>
 
   <dependencies>
@@ -22,7 +23,38 @@
       <artifactId>scalatest_2.11</artifactId>
       <version>3.0.1</version>
     </dependency>
+    <dependency>
+      <groupId>org.scala-lang</groupId>
+      <artifactId>scala-library</artifactId>
+      <version>${scala.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.typesafe.akka</groupId>
+      <artifactId>akka-http_2.11</artifactId>
+      <version>10.0.3</version>
+    </dependency>
+    <dependency>
+      <groupId>com.typesafe.akka</groupId>
+      <artifactId>akka-http-spray-json_2.11</artifactId>
+      <version>10.0.3</version>
+    </dependency>
+    <dependency>
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>logback-classic</artifactId>
+      <version>1.1.2</version>
+    </dependency>
   </dependencies>
+
+  <repositories>
+    <repository>
+      <id>oss-sonatype</id>
+      <name>Sonatype OSS Snapshots</name>
+      <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
+    </repository>
+  </repositories>
   <build>
 
     <sourceDirectory>src/main/scala</sourceDirectory>
@@ -36,7 +68,6 @@
           <execution>
             <goals>
               <goal>compile</goal>
-              <goal>testCompile</goal>
             </goals>
           </execution>
         </executions>
@@ -63,26 +94,71 @@
         </executions>
       </plugin>
 
-
       <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-assembly-plugin</artifactId>
-        <version>2.6</version>
-        <configuration>
-          <descriptors>
-            <descriptor>src/assembly/assembly.xml</descriptor>
-          </descriptors>
-          <outputDirectory>../entitylang.lang/target/metaborg</outputDirectory>
-        </configuration>
+        <artifactId>maven-shade-plugin</artifactId>
+        <version>2.4.1</version>
         <executions>
           <execution>
             <phase>package</phase>
             <goals>
-              <goal>single</goal>
+              <goal>shade</goal>
             </goals>
+            <configuration>
+              <artifactSet>
+                <includes>
+                  <include>*:*:*</include>
+                </includes>
+                <excludes>
+                  <exclude>org.metaborg:org.metaborg.scopegraph:*</exclude>
+                  <exclude>org.metaborg:org.spoofax.interpreter.core:*</exclude>
+                  <exclude>org.metaborg:org.spoofax.jsglr:*</exclude>
+                  <exclude>org.metaborg:org.strategoxt.strj:*</exclude>
+                  <exclude>org.metaborg:org.spoofax.interpreter.library.xml:*</exclude>
+                  <exclude>org.metaborg:org.spoofax.interpreter.library.java:*</exclude>
+                  <exclude>org.metaborg:org.spoofax.interpreter.library.jsglr:*</exclude>
+                  <exclude>org.metaborg:strategoxt-min:*</exclude>
+                  <exclude>org.metaborg:org.spoofax.interpreter.library.index:*</exclude>
+                  <exclude>org.metaborg:org.metaborg.runtime.task:*</exclude>
+                  <exclude>org.metaborg:org.spoofax.terms.typesmart:*</exclude>
+                </excludes>
+              </artifactSet>
+
+              <transformers>
+                <transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+                  <resource>reference.conf</resource>
+                </transformer>
+              </transformers>
+
+              <shadedArtifactAttached>true</shadedArtifactAttached>
+              <shadedClassifierName>with-dependencies</shadedClassifierName>
+              <outputDirectory>../entitylang.lang/target/metaborg</outputDirectory>
+            </configuration>
           </execution>
         </executions>
       </plugin>
+
+      <!--<plugin>-->
+        <!--<groupId>org.apache.maven.plugins</groupId>-->
+        <!--<artifactId>maven-assembly-plugin</artifactId>-->
+        <!--<version>2.6</version>-->
+        <!--<configuration>-->
+          <!--<descriptors>-->
+            <!--<descriptor>src/assembly/assembly.xml</descriptor>-->
+          <!--</descriptors>-->
+
+          <!--<outputDirectory>../entitylang.lang/target/metaborg</outputDirectory>-->
+        <!--</configuration>-->
+        <!--<executions>-->
+          <!--<execution>-->
+            <!--<phase>package</phase>-->
+            <!--<goals>-->
+              <!--<goal>single</goal>-->
+            <!--</goals>-->
+          <!--</execution>-->
+        <!--</executions>-->
+      <!--</plugin>-->
+
+
 
     </plugins>
   </build>

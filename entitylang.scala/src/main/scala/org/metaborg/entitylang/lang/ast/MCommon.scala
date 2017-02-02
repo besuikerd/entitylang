@@ -5,8 +5,12 @@ object MCommon {
   import org.metaborg.scalaterms
   import org.metaborg.scalaterms.{ sdf, STerm }
   // Generated imports
-  
+
   // Lexical definitions
+  // Define implicit conversions (e.g. in the package object) to another representation you prefer
+  case class SKEYWORD(string: java.lang.String, origin: scalaterms.Origin) extends sdf.Lexical {
+    override def toSTerm: STerm.String = STerm.String(string, scala.Some(origin))
+  }
   // Define implicit conversions (e.g. in the package object) to another representation you prefer
   case class SID(string: java.lang.String, origin: scalaterms.Origin) extends sdf.Lexical {
     override def toSTerm: STerm.String = STerm.String(string, scala.Some(origin))
@@ -48,6 +52,14 @@ object MCommon {
     override def toSTerm: STerm.String = STerm.String(string, scala.Some(origin))
   }
   // Lexical extractors
+  object SKEYWORD extends scalaterms.TermLikeCompanion[SKEYWORD] {
+    override val fromSTerm: scalaterms.FromSTerm[SKEYWORD] = new scalaterms.FromSTerm[SKEYWORD] {
+      override def unapply(term: STerm): Option[SKEYWORD] = term match {
+        case STerm.String(string, scala.Some(origin)) => scala.Some(SKEYWORD(string, origin))
+        case _ => scala.None
+      }
+    }
+  }
   object SID extends scalaterms.TermLikeCompanion[SID] {
     override val fromSTerm: scalaterms.FromSTerm[SID] = new scalaterms.FromSTerm[SID] {
       override def unapply(term: STerm): Option[SID] = term match {
@@ -129,7 +141,7 @@ object MCommon {
     }
   }
   // Sort definitions
-  
+
   // Constructor definitions
-  
+
 }

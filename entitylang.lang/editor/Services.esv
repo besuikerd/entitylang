@@ -1,0 +1,8 @@
+module Services
+
+
+menus
+  menu: "Services"
+    action: "Start Webservice" = start-graph-service
+    action: "Stop Webservice" = stop-graph-service
+    
