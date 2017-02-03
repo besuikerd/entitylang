@@ -1,5 +1,5 @@
 package org.metaborg.entitylang.parser
 
-trait StartSymbol[T]{
+trait StartSymbol{
   def stringRepresentation: String
 }

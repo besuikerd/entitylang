@@ -12,7 +12,7 @@ trait SpoofaxParserProvider extends ParserProvider {
   private val lang = spoofax.languageDiscoveryService.discover(languageRequest).iterator().next()
   private val langImpl = spoofax.languageService.getImpl(lang.config().identifier())
 
-  override def parserFor[T <: TermLike](companion: TermLikeCompanion[T], startSymbol: StartSymbol[T]): Parser[T] = new SpoofaxParser[T](
+  override def parserFor[T <: TermLike](companion: TermLikeCompanion[T], startSymbol: StartSymbol): Parser[T] = new SpoofaxParser[T](
     startSymbol = startSymbol,
     languageImpl = langImpl,
     syntaxService = spoofax.syntaxService,

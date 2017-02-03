@@ -8,7 +8,7 @@ import org.metaborg.spoofax.core.unit.{ISpoofaxInputUnit, ISpoofaxParseUnit, Inp
 import scala.collection.JavaConversions._
 
 class SpoofaxParser[T <: TermLike](
-  override val startSymbol: StartSymbol[T],
+  override val startSymbol: StartSymbol,
   languageImpl: ILanguageImpl,
   syntaxService: ISyntaxService[ISpoofaxInputUnit, ISpoofaxParseUnit],
   companion: TermLikeCompanion[T]

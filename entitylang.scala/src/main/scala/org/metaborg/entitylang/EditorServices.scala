@@ -33,9 +33,7 @@ object EditorServices extends EditorServices{
           }
         }
 
-
         val dataflowGraph = DataflowAnalysis.dataflowAnalysis(start)
-        TypeAnalysis.topologicalSort(dataflowGraph)
 
         val graph = Graph(dataflowGraph.nodes.map(n => Node(n.index.toString)), dataflowGraph.edges.map(e => Edge(e.from.toString, e.to.toString)))
         GraphWebService.pushGraph(graph)

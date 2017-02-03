@@ -240,20 +240,4 @@ object TypeAnalysis {
 
 
   val logger = LoggerFactory.getLogger(getClass)
-
-  def topologicalSort(d: DataflowGraph): Seq[Attribute] = {
-    var l = Seq.empty
-    var s = d.nodes.filter(n => !d.edges.exists(e => e.to == n.index))
-    logger.info(s.toString())
-    s.foreach(n => logger.debug(n.index.toString))
-
-    null
-//    while(!s.isEmpty){
-//      val n = s.head
-//      s = s.tail
-//
-//    }
-
-
-  }
 }

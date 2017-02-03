@@ -10,8 +10,9 @@ entity Assignment{
 
 entity Submission{
   grade: Float?
-  pass: Boolean = grade >= assignment.minimum && forall(children.pass) <+ false
-  
+  pass: Boolean = grade >= assignment.minimum && forall(childPass) <+ false
+
+  childPass = children.pass
   avg = avg(children.grade)
 
   pass2 = pass || avg > 5.5

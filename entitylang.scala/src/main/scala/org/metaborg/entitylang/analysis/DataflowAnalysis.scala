@@ -19,9 +19,6 @@ object DataflowAnalysis {
 
   case class EntityDefinition(attributes: Seq[Attribute])
 
-  sealed trait Attribute{
-    def index: AttributeIndex
-  }
 
   case class EntityRef(name: String)
   case class AttributeRef(name: String)
@@ -29,6 +26,9 @@ object DataflowAnalysis {
     override def toString: String = s"${entityRef.name}.${attributeRef.name}"
   }
 
+  sealed trait Attribute{
+    def index: AttributeIndex
+  }
   case class Property(index: AttributeIndex, tpe: Type) extends Attribute
   case class DerivedValue(index: AttributeIndex) extends Attribute
   case class Relation(index: AttributeIndex, entityRef: EntityRef, multiplicity: Multiplicity) extends Attribute
@@ -51,6 +51,7 @@ object DataflowAnalysis {
   case object FloatType extends Type
 
   case class DataflowGraph(nodes: Seq[Attribute], edges: Seq[Edge])
+
   case class Edge(from: AttributeIndex, to: AttributeIndex)
   case class DependencyCalculation(attribute: AttributeIndex, e: SExp)
 
@@ -125,5 +126,60 @@ object DataflowAnalysis {
       case Apply2(e1, exps, _) => (index, walk(index, e1)._2 ++ exps.value.flatMap(e => walk(index, e)._2))
     }
     walk(d.attribute, d.e)._2
+  }
+
+
+  def stronglyConnected(graph: DataflowGraph): Seq[Seq[AttributeIndex]] = {
+    import org.metaborg.entitylang.util.MapExtensions._
+
+    class Vertice(var index: Int, var lowlink: Int, var onStack: Boolean, val node: AttributeIndex)
+    type AdjacencyList = Map[Vertice, Seq[Vertice]]
+
+    val UNDEFINED = -1
+    var index = 0
+    var sccs = Seq.empty[Seq[AttributeIndex]]
+    val s = scala.collection.mutable.Stack.apply[Vertice]()
+    val vertices = graph.nodes.map(n => new Vertice(-1, 0, false, n.index))
+    val verticeMap = vertices.map(v => v.node -> v).toMap
+    val adjacencyList = graph.edges.foldLeft[AdjacencyList](graph.nodes.map(n => verticeMap(n.index) -> Seq.empty).toMap){case (adj, Edge(from, to)) => adj.addBinding(verticeMap(from), verticeMap(to))}
+
+    val edges = for{
+      (from, adj) <- adjacencyList.toList
+      to <- adj
+    } yield (verticeMap(from.node), verticeMap(to.node))
+
+
+    for(v <- vertices if v.index == UNDEFINED){
+      run(v)
+    }
+
+    def run(v: Vertice): Unit ={
+      v.index = index
+      v.lowlink = index
+      index = index + 1
+      s.push(v)
+      v.onStack = true
+
+      for(w <- adjacencyList(v)){
+        if(w.index == UNDEFINED){
+          run(w)
+          v.lowlink = Math.min(v.lowlink, w.lowlink)
+        } else if(w.onStack){
+          v.lowlink = Math.min(v.lowlink, w.index)
+        }
+      }
+
+      if(v.lowlink == v.index){
+        var scc = Seq.empty[AttributeIndex]
+        var w: Vertice = null
+        do {
+          w = s.pop()
+          w.onStack = false
+          scc = w.node +: scc
+        } while(v != w)
+        sccs = scc +: sccs
+      }
+    }
+    sccs.reverse
   }
 }

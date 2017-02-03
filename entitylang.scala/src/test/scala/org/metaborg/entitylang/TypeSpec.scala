@@ -1,7 +1,8 @@
 package org.metaborg.entitylang
 
-import org.metaborg.entitylang.analysis.TypeAnalysis
+import org.metaborg.entitylang.analysis.{DataflowAnalysis, TypeAnalysis}
 import org.metaborg.entitylang.analysis.TypeAnalysis.FunctionType
+import org.metaborg.entitylang.parser.EntityLangParserProvider
 import org.scalatest.FlatSpec
 
 class TypeSpec extends FlatSpec{
@@ -18,6 +19,22 @@ class TypeSpec extends FlatSpec{
     } yield (c, r, MultiplicityType.merge(c, r))
 
     merged.foreach{case (m1, m2, merged) => println(f"$m1%20s ++ $m2%-20s => $merged%-20s")}
+  }
+
+  "strongly connected components" should " be calculated correctly" in {
+    val p = EntityLangParserProvider.parser.parseResource("/test.etl")
+    val dataflowGraph = DataflowAnalysis.dataflowAnalysis(p)
+    val components = DataflowAnalysis.stronglyConnected(dataflowGraph)
+
+
+//    println(org.metaborg.entitylang.analysis.DataflowGraph.buildDataflowGraph(p))
+    for {
+      (component, i) <- components.zipWithIndex
+      node <- {
+        println("Component " + i)
+        component
+      }
+    } println(node)
   }
 
   "type checker" should "infer types of expressions correctly" in {
