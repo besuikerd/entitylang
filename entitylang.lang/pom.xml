@@ -60,15 +60,15 @@
         <executions>
           <execution>
             <id>copy-resources</id>
-            <!-- here the phase you need -->
             <phase>validate</phase>
             <goals>
               <goal>copy-resources</goal>
             </goals>
             <configuration>
-              <outputDirectory>${project.build.directory}/metaborg</outputDirectory>
+              <outputDirectory>${project.build.directory}</outputDirectory>
               <resources>
                 <resource>
+                  <targetPath>metaborg</targetPath>
                   <directory>../entitylang.scala/target</directory>
                   <includes>
                     <include>entitylang.scala-0.1.0-SNAPSHOT-with-dependencies.jar</include>
