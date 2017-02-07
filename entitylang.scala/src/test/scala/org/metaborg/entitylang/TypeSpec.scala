@@ -26,15 +26,14 @@ class TypeSpec extends FlatSpec{
     val dataflowGraph = DataflowAnalysis.dataflowAnalysis(p)
     val components = DataflowAnalysis.stronglyConnected(dataflowGraph)
 
-
-//    println(org.metaborg.entitylang.analysis.DataflowGraph.buildDataflowGraph(p))
-    for {
-      (component, i) <- components.zipWithIndex
-      node <- {
-        println("Component " + i)
-        component
-      }
-    } println(node)
+    println(org.metaborg.entitylang.analysis.DataflowGraph.buildDataflowGraph(p))
+//    for {
+//      (component, i) <- components.zipWithIndex
+//      node <- {
+//        println("Component " + i)
+//        component
+//      }
+//    } println(node)
   }
 
   "type checker" should "infer types of expressions correctly" in {
