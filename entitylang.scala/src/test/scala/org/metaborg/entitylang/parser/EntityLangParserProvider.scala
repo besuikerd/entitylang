@@ -11,7 +11,7 @@ case object Exp extends EntityLangStartSymbol("Exp")
 case object Start extends EntityLangStartSymbol("Start")
 
 object EntityLangParserProvider extends ParserProvider with SpoofaxParserProvider{
-  override def languageLocation: String = "../entitylang.lang"
+  override def languageLocation: String = "../entitylang.syntax"
   override type StartSymbol = EntityLangStartSymbol
 
   val expParser = parserFor(SExp, Exp)

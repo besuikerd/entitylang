@@ -20,6 +20,7 @@
     <module>entitylang.eclipse.feature</module>
     <module>entitylang.eclipse.site</module>
     <module>entitylang.example</module>
+    <module>entitylang.syntax</module>
     <module>entitylang.lang</module>
     <module>entitylang.scala</module>
   </modules>

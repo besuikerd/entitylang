@@ -1,16 +1,12 @@
 ---
-id: org.metaborg:entitylang.lang:0.1.0-SNAPSHOT
-name: entitylang
+id: org.metaborg:entitylang.syntax:0.1.0-SNAPSHOT
+name: EntitylangSyntax
 dependencies:
   compile:
   - org.metaborg:org.metaborg.meta.lang.esv:${metaborgVersion}
   - org.metaborg:org.metaborg.meta.lang.template:${metaborgVersion}
-  - org.metaborg:entitylang.syntax:0.1.0-SNAPSHOT
   source:
   - org.metaborg:meta.lib.spoofax:${metaborgVersion}
-  - org.metaborg:org.metaborg.meta.lib.analysis:${metaborgVersion}
-  java:
-  - org.metaborg:entitylang.scala:0.1.0-SNAPSHOT
 pardonedLanguages:
 - EditorService
 - Stratego-Sugar
@@ -33,5 +29,3 @@ language:
     - stratego-sdf
     - -la
     - strc
-build:
-  useBuildSystemSpec: true

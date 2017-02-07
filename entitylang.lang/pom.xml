@@ -13,6 +13,7 @@
     <groupId>org.metaborg</groupId>
     <artifactId>parent.language</artifactId>
     <version>2.1.0</version>
+    <relativePath/>
   </parent>
 
   <dependencies>
@@ -51,38 +52,35 @@
     </dependency>
   </dependencies>
 
-<!-- 
   <build>
     <plugins>
       <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-dependency-plugin</artifactId>
+        <artifactId>maven-resources-plugin</artifactId>
+        <version>3.0.2</version>
         <executions>
           <execution>
-            <id>copy</id>
+            <id>copy-resources</id>
+            <!-- here the phase you need -->
             <phase>validate</phase>
             <goals>
-              <goal>copy-dependencies</goal>
+              <goal>copy-resources</goal>
             </goals>
+            <configuration>
+              <outputDirectory>${project.build.directory}/metaborg</outputDirectory>
+              <resources>
+                <resource>
+                  <directory>../entitylang.scala/target</directory>
+                  <includes>
+                    <include>entitylang.scala-0.1.0-SNAPSHOT-with-dependencies.jar</include>
+                  </includes>
+                </resource>
+              </resources>
+            </configuration>
           </execution>
         </executions>
-        <configuration>
-          <outputDirectory>${project.build.directory}/metaborg</outputDirectory>
-          <overWriteReleases>false</overWriteReleases>
-          <overWriteSnapshots>true</overWriteSnapshots>
-          <excludeTypes>spoofax-language</excludeTypes>
-        </configuration>
-      </plugin>
-
-      <plugin>
-        <groupId>org.metaborg</groupId>
-        <artifactId>spoofax-maven-plugin</artifactId>
-        <version>2.1.0</version>
-        <extensions>true</extensions>
       </plugin>
     </plugins>
   </build>
- -->
  
   <repositories>
     <repository>
