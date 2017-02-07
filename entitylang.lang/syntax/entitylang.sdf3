@@ -1,0 +1,12 @@
+module entitylang
+
+imports
+  Common
+  Model
+
+context-free start-symbols
+  Start
+  
+
+context-free syntax
+  Start.Start = <<{Model "\n"}*>>
