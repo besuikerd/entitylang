@@ -1,6 +1,9 @@
 entity Student{
   name: String
   compilation = submissions.assignment.name + submissions.grade
+  
+  x: Float* = submissions
+  y = x.grade
 }
 
 entity Assignment{

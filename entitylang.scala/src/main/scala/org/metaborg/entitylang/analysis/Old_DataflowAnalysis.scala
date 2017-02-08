@@ -14,7 +14,7 @@ import org.metaborg.entitylang.lang.ast.MType.SPrimitiveTypeWithMultiplicity.{Pr
 import org.metaborg.entitylang.lang.ast.MType.{SMultiplicity, SPrimitiveTypeWithMultiplicity, SType}
 import org.metaborg.entitylang.lang.ast.Mentitylang.SStart.Start1
 
-object DataflowAnalysis {
+object Old_DataflowAnalysis {
 
 
   case class EntityDefinition(attributes: Seq[Attribute])

@@ -4,6 +4,7 @@ import akka.actor.{Actor, ActorRef, Props}
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.server.Route
 import akka.stream.ActorMaterializer
+import org.metaborg.entitylang.analysis.AnalysisGraph
 
 import scala.concurrent.Future
 
@@ -33,4 +34,5 @@ object GraphWebServiceActor{
   def props(latest: ActorRef) = Props(classOf[GraphWebServiceActor], latest)
   case class Start(interface: String, port: Int)
   case class Stop()
+  case class GraphPushed(g: AnalysisGraph)
 }

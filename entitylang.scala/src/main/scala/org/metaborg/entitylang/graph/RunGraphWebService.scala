@@ -3,14 +3,10 @@ package org.metaborg.entitylang.graph
 import java.io.File
 import java.nio.file._
 
-import org.metaborg.entitylang.EditorServices
-
+import org.metaborg.entitylang.analysis.Analyzer
 import scala.collection.JavaConversions._
 import org.metaborg.entitylang.graph.webservice.GraphWebService
-import org.metaborg.entitylang.parser.EntityLangParser
-import org.metaborg.scalaterms.spoofax.GeneralStrategyInput
-import org.metaborg.spoofax.core.Spoofax
-import org.spoofax.interpreter.library.IOAgent
+import org.metaborg.entitylang.parser.EntityLangParserProvider
 
 import scala.io.Source
 
@@ -55,18 +51,11 @@ object RunGraphWebService extends App{
     }
   }
 
-
-  object Parser extends EntityLangParser
-
-
   def process(path: Path): Unit ={
-
-    val contents = Source.fromFile(path.toFile).getLines().mkString("\n")
-
-    Parser.tryParse(contents) match{
+    EntityLangParserProvider.parser.tryParseFile(path.toFile.getAbsolutePath) match{
       case Right(ast) => {
-        val input = GeneralStrategyInput(ast, path.toFile.getAbsolutePath, "../entitylang.lang")
-        EditorServices.editorAnalyze(input)
+        val model = Analyzer.analyze(ast)
+        GraphWebService.pushGraph(model.graph)
       }
       case Left(errors) => {
         println("parsing failed:")

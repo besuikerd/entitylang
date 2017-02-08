@@ -3,7 +3,7 @@ package org.metaborg.entitylang.parser
 import org.metaborg.scalaterms.{TermLike, TermLikeCompanion}
 import org.metaborg.spoofax.core.Spoofax
 
-trait SpoofaxParserProvider extends ParserProvider {
+trait SpoofaxParserProvider extends ParserProvider[SpoofaxParser.Error] {
   def languageLocation: String
 
   private val spoofax = new Spoofax()
@@ -12,7 +12,7 @@ trait SpoofaxParserProvider extends ParserProvider {
   private val lang = spoofax.languageDiscoveryService.discover(languageRequest).iterator().next()
   private val langImpl = spoofax.languageService.getImpl(lang.config().identifier())
 
-  override def parserFor[T <: TermLike](companion: TermLikeCompanion[T], startSymbol: StartSymbol): Parser[T] = new SpoofaxParser[T](
+  override def parserFor[T <: TermLike](companion: TermLikeCompanion[T], startSymbol: StartSymbol): Parser[T, SpoofaxParser.Error] = new SpoofaxParser[T](
     startSymbol = startSymbol,
     languageImpl = langImpl,
     syntaxService = spoofax.syntaxService,

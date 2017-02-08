@@ -6,8 +6,7 @@ import org.metaborg.scalaterms.TermLike
 
 import scala.io.Source
 
-trait Parser[T <: TermLike]{
-  type Error
+trait Parser[T <: TermLike, Error]{
 
   val startSymbol: StartSymbol
 
@@ -31,10 +30,9 @@ trait Parser[T <: TermLike]{
 
   def parseResource(path: String): T = unsafeExtractResult(tryParseResource(path))
 
-  def map[U <: T](f: T => U): Parser[U] = new MappedParser[U](startSymbol, f)
+  def map[U <: T](f: T => U): Parser[U, Error] = new MappedParser[U](startSymbol, f)
 
-  class MappedParser[U <: T](override val startSymbol: StartSymbol, f: T => U) extends Parser[U]{
-    override type Error = Parser.this.Error
+  class MappedParser[U <: T](override val startSymbol: StartSymbol, f: T => U) extends Parser[U, Error]{
     override def tryParse(input: String): scala.Either[Error, U] = Parser.this.tryParse(input).right.map(f)
   }
 }

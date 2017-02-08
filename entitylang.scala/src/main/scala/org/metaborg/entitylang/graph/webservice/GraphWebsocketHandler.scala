@@ -6,9 +6,8 @@ import akka.actor.ActorRef
 import akka.http.scaladsl.model.{ContentTypes, HttpEntity, HttpResponse}
 import akka.http.scaladsl.server.Route
 import akka.stream.scaladsl.{Sink, Source}
-import org.metaborg.entitylang.graph.Graph
-import spray.json._
-import org.metaborg.entitylang.graph.GraphJsonFormat._
+import org.metaborg.entitylang.analysis.AnalysisGraph
+import scalax.collection.io.json._
 
 trait GraphWebsocketHandler {
 
@@ -19,7 +18,7 @@ trait GraphWebsocketHandler {
 
     ctx.request.header[UpgradeToWebSocket] match{
       case Some(upgrade) => {
-        val source: Source[Message, ActorRef] = Source.actorPublisher[Graph](GraphSourceActor.props(latestGraphActor)).map(g => TextMessage(g.toJson.prettyPrint))
+        val source: Source[Message, ActorRef] = Source.actorPublisher[AnalysisGraph](GraphSourceActor.props(latestGraphActor)).map(g => TextMessage(g.toJson(AnalysisGraphDescriptor.descriptor)))
         ctx.complete(upgrade.handleMessagesWithSinkSource(Sink.foreach(m => println(m)), source))
       }
       case None => {

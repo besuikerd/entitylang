@@ -1,6 +1,6 @@
 package org.metaborg.entitylang.analysis
 
-import org.metaborg.entitylang.analysis.DataflowAnalysis._
+import org.metaborg.entitylang.analysis.Old_DataflowAnalysis._
 import org.metaborg.entitylang.desugar
 import org.metaborg.entitylang.desugar._
 import org.metaborg.entitylang.lang.ast.MExpression.SExp._
@@ -9,7 +9,7 @@ import org.metaborg.entitylang.lang.ast.MExpression.{SExp, SLiteral}
 import org.metaborg.entitylang.lang.ast.Mentitylang.SStart.Start1
 import org.slf4j.LoggerFactory
 
-object TypeAnalysis {
+object Old_TypeAnalysis {
 
   sealed trait MultiplicityType
 

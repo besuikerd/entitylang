@@ -15,8 +15,11 @@ entity Submission{
   childPass = children.pass
   avg = avg(children.grade)
 
+  x = student
+
   pass2 = pass || avg > 5.5
 }
+
 
 relation Submission.assignment 1 <-> * Assignment.submissions
 relation Student.submissions * <-> 1 Submission.student
