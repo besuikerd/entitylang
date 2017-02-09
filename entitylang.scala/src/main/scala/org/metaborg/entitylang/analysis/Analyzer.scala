@@ -31,14 +31,14 @@ object Analyzer {
               val entityFieldNode = AttributeNode(entityNode.name, name.string)
               val entityFieldData = AttributeNodeData(BaseType(tpe), entityFieldNode, attribute)
               model.copy(
-                data = model.data + (entityFieldNode -> entityFieldData),
+                fields = model.fields + (entityFieldNode -> entityFieldData),
                 graph = model.graph + (entityNode ~> entityFieldNode)
               )
             case derivedValue @ DerivedAttribute3(name, tpe, e, origin) =>
               val entityFieldNode = DerivedValueNode(entityNode.name, name.string)
               val entityFieldNodeData = DerivedValueNodeData(BaseType(tpe), entityFieldNode, derivedValue)
               model.copy(
-                data = model.data + (entityFieldNode -> entityFieldNodeData),
+                fields = model.fields + (entityFieldNode -> entityFieldNodeData),
                 graph = model.graph + (entityNode ~> entityFieldNode)
               )
           })
@@ -53,7 +53,7 @@ object Analyzer {
           val relationNodeDataRight = RelationNodeData(EntityType(entityRefLeft.id1.string), entityRefRight, attributeRefRight, multiplicityRight, relation)
 
           model.copy(
-            data = model.data
+            fields = model.fields
               + (relationNodeLeft -> relationNodeDataLeft)
               + (relationNodeRight -> relationNodeDataRight),
             graph = model.graph
@@ -68,7 +68,7 @@ object Analyzer {
     def addDependency(model: AnalysisModel, entityNode: EntityNode, field: String): (EntityNode, Seq[AnalysisNode]) = {
       val optDependency = for {
         entityField <- model.graph.findEntityField(entityNode.name, field)
-        entityFieldData <- model.getEntityFieldData(entityField.typedValue[EntityFieldNode])
+        entityFieldData <- model.fields.get(entityField.typedValue[EntityFieldNode])
         targetEntity <- Some(entityFieldData.fieldType match{
           case EntityType(t) => t
           case _ => entityNode.name
@@ -99,7 +99,7 @@ object Analyzer {
     model.graph.derivedValues.foldLeft(model) { case (model, node) =>
       val targets = for {
         derivedValueNode <- node.optTypedValue[DerivedValueNode]
-        derivedValueData: DerivedValueNodeData <- model.data.get(derivedValueNode)
+        derivedValueData @ DerivedValueNodeData(_, _, _) <- model.fields.get(derivedValueNode)
         entityNode <- model.graph.findEntity(derivedValueNode.entity)
       } yield {
         walk(model, entityNode.typedValue[EntityNode], derivedValueData.term.exp3)._2

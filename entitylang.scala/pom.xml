@@ -59,11 +59,6 @@
       <artifactId>graph-json_2.11</artifactId>
       <version>1.11.0</version>
     </dependency>
-    <dependency>
-      <groupId>com.github.besuikerd</groupId>
-      <artifactId>hmap</artifactId>
-      <version>-41ead9e711-1</version>
-    </dependency>
   </dependencies>
 
   <repositories>
