@@ -1,7 +1,6 @@
 package org.metaborg.entitylang
 
 import org.metaborg.entitylang.analysis.{Analyzer, Old_DataflowAnalysis, Old_TypeAnalysis}
-import org.metaborg.entitylang.analysis.Old_TypeAnalysis.FunctionType
 import org.metaborg.entitylang.parser.EntityLangParserProvider
 import org.scalatest.FlatSpec
 
@@ -35,7 +34,7 @@ class TypeSpec extends FlatSpec{
       """.stripMargin
     val ast = EntityLangParserProvider.parser.parseResource("/test.etl")
     val model = Analyzer.analyze(ast)
-    val scc = model.graph.scc
+    val scc = model.graph.stronglyConnectedComponents
 
 
     val cycles = scc.map(n => n.innerNodeTraverser.findCycle.map(_.nodes.toList.distinct).getOrElse(Seq(n)))
@@ -48,18 +47,22 @@ class TypeSpec extends FlatSpec{
   }
 
   "type checker" should "infer types of expressions correctly" in {
-    import Old_TypeAnalysis._
-    import org.metaborg.entitylang.parser.EntityLangParserProvider.expParser._
+    import analysis.types._
 
-    import Type._
+    val add = num("x") =>: num("y") =>: "x" ~>: "y" ~>: lub("x", "y")
+    val identity = "x" ~>: "x"
 
-    val env = Map(
-      "f" -> boolean ~>: string
-    )
+    println(FunctionType(IntType(), FunctionType(StringType(), BooleanType())))
 
     println(int ~>: string ~>: boolean)
 
-    println(Old_TypeAnalysis.getType(env)(parse("f(true)")))
+    println(add)
+    println(ppType(add))
 
+
+//    println(ppType(reduceByApplication(add, int)))
+//    println(ppType(reduceByApplication(add, string)))
+    println(ppType(reduceByApplication(identity, int)))
+    println(ppType(substituteTypeVariable("x", identity, int)))
   }
 }

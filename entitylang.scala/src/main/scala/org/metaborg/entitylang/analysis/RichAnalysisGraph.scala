@@ -22,7 +22,11 @@ class RichAnalysisGraph(val graph: AnalysisGraph) extends AnyVal {
   def relations = nodesOfType[RelationNode]
 
 
-  def scc = {
+  /**
+    * calculates the set of strongly connected components
+    * @return sequence of representatives for each strongly connected component
+    */
+  def stronglyConnectedComponents: Seq[AnalysisNode] = {
     type SCSS = scala.collection.mutable.Map[AnalysisNode, AnalysisNode]
     def dfs(node: AnalysisNode, path: Map[AnalysisNode, Int], scss: SCSS): SCSS = {
 
@@ -56,7 +60,5 @@ class RichAnalysisGraph(val graph: AnalysisGraph) extends AnyVal {
     }
 
     scss.values.toSeq.distinct
-
-//    graph.entities.map(n => n.innerNodeTraverser.toSeq.size).sum
   }
 }
