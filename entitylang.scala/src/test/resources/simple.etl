@@ -1,0 +1,7 @@
+entity A {
+  a: Int
+  b: Int
+  c = a + 1
+  d = b + 1
+  e = c + d
+}

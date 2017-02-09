@@ -12,4 +12,7 @@ class RichAnalysisNode(val node: AnalysisNode) extends AnyVal {
   }
 
   def typedValue[T <: AnalysisGraphNode : ClassTag]: T = classTag[T].runtimeClass.cast(node.value).asInstanceOf[T]
+
+  def entityOfEntityField: Option[AnalysisNode] =
+    node.innerNodeTraverser.findPredecessor(_.value.isInstanceOf[EntityNode])
 }

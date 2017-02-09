@@ -6,6 +6,8 @@ entity Student{
 entity Assignment{
   name: String
   minimum: Float?
+
+  p = submissions.q
 }
 
 entity Submission{
@@ -15,7 +17,7 @@ entity Submission{
   childPass = children.pass
   avg = avg(children.grade)
 
-  x = student
+  q = assignment.p
 
   pass2 = pass || avg > 5.5
 }

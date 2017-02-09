@@ -8,8 +8,6 @@ import org.scalatest.FlatSpec
 import scala.reflect.ClassTag
 
 class TypeSpec extends FlatSpec{
-
-
   "merge operator" should " merge multiplicities correctly" in {
 
     import org.metaborg.entitylang.analysis.Old_TypeAnalysis._
@@ -24,49 +22,29 @@ class TypeSpec extends FlatSpec{
   }
 
   "strongly connected components" should " be calculated correctly" in {
-    val p = EntityLangParserProvider.parser.parseResource("/test.etl")
-    val dataflowGraph = Old_DataflowAnalysis.dataflowAnalysis(p)
-    val components = Old_DataflowAnalysis.stronglyConnected(dataflowGraph)
 
-    import scalax.collection.io.json._
-    import scalax.collection.io.json.descriptor.predefined.UnDi
-
-
-    import analysis._
-
-    def descriptor[T: Manifest](id: String, f: T => String): NodeDescriptor[T] = new NodeDescriptor[T](typeId = id){
-      override def id(node: Any): String = f(node.asInstanceOf[T])
-    }
-
-    val entityDescriptor = descriptor[EntityNode]("entity", _.name)
-    val attributeDescriptor = descriptor[AttributeNode]("attribute", n => s"${n.entity}.${n.name}")
-    val derivedValueDescriptor = descriptor[DerivedValueNode]("derivedValue", n => s"${n.entity}.${n.name}")
-    val relationDescriptor = descriptor[RelationNode]("relation", n => s"${n.entity}.${n.name}")
-
-    val dataflowGraphDescriptor = new Descriptor[AnalysisGraphNode](
-      defaultNodeDescriptor = entityDescriptor,
-      defaultEdgeDescriptor = UnDi.descriptor(),
-      namedNodeDescriptors = Seq(
-        attributeDescriptor,
-        derivedValueDescriptor,
-        relationDescriptor
-      )
-    )
+    val program =
+      """
+        |entity A {
+        |  c = a + b
+        |  a: Int
+        |  b: Int
+        |  d = e + 1
+        |  e = d + 1
+        |}
+      """.stripMargin
+    val ast = EntityLangParserProvider.parser.parseResource("/test.etl")
+    val model = Analyzer.analyze(ast)
+    val scc = model.graph.scc
 
 
-    val model = Analyzer.analyze(p)
+    val cycles = scc.map(n => n.innerNodeTraverser.findCycle.map(_.nodes.toList.distinct).getOrElse(Seq(n)))
 
-    val js = model.graph.toJson(dataflowGraphDescriptor)
-    println(js)
+    cycles.foreach(println)
 
+    println("---")
 
-//    for {
-//      (component, i) <- components.zipWithIndex
-//      node <- {
-//        println("Component " + i)
-//        component
-//      }
-//    } println(node)
+    scc.foreach(println)
   }
 
   "type checker" should "infer types of expressions correctly" in {
