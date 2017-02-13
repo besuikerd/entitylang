@@ -1,0 +1,9 @@
+entity File {
+  isDirectory: Boolean
+  name: String
+  size: Int
+
+  totalSize = size + sum(children.size)
+}
+
+relation File.children * <-> 1 File.parent

@@ -84,7 +84,8 @@ object Analyzer {
     def walk(model: AnalysisModel, entityNode: EntityNode, e: SExp): (EntityNode, Seq[AnalysisNode]) = e match {
       case MemberAccess2(e1, name, _) =>
         val (entityNode2, edges) = walk(model, entityNode, e1)
-        addDependency(model, entityNode2, name.string)
+        val (entityNode3, edges2) = addDependency(model, entityNode2, name.string)
+        (entityNode3, edges ++ edges2)
       case UnExp(_, e1) => walk(model, entityNode, e1)
       case BinExp(_, e1, e2) =>
         val (_, nodes1) = walk(model, entityNode, e1)

@@ -49,20 +49,22 @@ class TypeSpec extends FlatSpec{
   "type checker" should "infer types of expressions correctly" in {
     import analysis.types._
 
-    val add = num("x") =>: num("y") =>: "x" ~>: "y" ~>: lub("x", "y")
+//    val add = num("x") =>: num("y") =>: "x" ~>: "y" ~>: lub("x", "y")
     val identity = "x" ~>: "x"
-
-    println(FunctionType(IntType(), FunctionType(StringType(), BooleanType())))
-
-    println(int ~>: string ~>: boolean)
 
     println(add)
     println(ppType(add))
 
+    implicit val env = TypingEnvironment.apply()
 
 //    println(ppType(reduceByApplication(add, int)))
 //    println(ppType(reduceByApplication(add, string)))
-    println(ppType(reduceByApplication(identity, int)))
-    println(ppType(substituteTypeVariable("x", identity, int)))
+    println(ppType(TypeWithEnvironment.reduce(identity, int)))
+
+
+    val add1 = TypeWithEnvironment.reduce(add, string)
+    val add2 = add1.reduce(float)
+    println(ppType(add1))
+    println(ppType(add2))
   }
 }
