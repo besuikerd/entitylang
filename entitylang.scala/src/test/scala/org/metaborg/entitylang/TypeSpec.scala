@@ -1,6 +1,8 @@
 package org.metaborg.entitylang
 
+import org.metaborg.entitylang.analysis.types.TypeSystem
 import org.metaborg.entitylang.analysis.{Analyzer, Old_DataflowAnalysis, Old_TypeAnalysis}
+import org.metaborg.entitylang.lang.ast.MExpression.SExp.If3
 import org.metaborg.entitylang.parser.EntityLangParserProvider
 import org.scalatest.FlatSpec
 
@@ -66,5 +68,16 @@ class TypeSpec extends FlatSpec{
     val add2 = add1.reduce(float)
     println(ppType(add1))
     println(ppType(add2))
+  }
+
+  "test type rules" should "test" in {
+    val e = EntityLangParserProvider.expParser.parse("if(true) false else true")
+
+    e match{
+      case ifExp: If3 =>
+        val res = TypeSystem.if3(ifExp).run
+        println(res)
+      case _ =>
+    }
   }
 }

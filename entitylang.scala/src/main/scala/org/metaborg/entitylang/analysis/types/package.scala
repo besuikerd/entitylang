@@ -55,7 +55,7 @@ package object types {
 
   sealed trait TypeConstraint extends Type
 //  case class Alias(name: String, relation: TypeConstraint) extends TypeConstraint
-  case class Covariant(t1: TypeConstraint, t2: TypeConstraint) extends TypeConstraint
+  case class Covariant(t1: Invariant, t2: TypeConstraint) extends TypeConstraint
   case class Alternative(t1: TypeConstraint, t2: TypeConstraint) extends TypeConstraint
   case class Invariant(t: Type) extends TypeConstraint
   case class TypeClass(name: String) extends TypeConstraint
@@ -73,13 +73,15 @@ package object types {
 
   implicit class RichTypeConstraint(val constraint: TypeConstraint) extends AnyVal{
     def apply(s: String) = PartialTypeRestriction(constraint, s)
-
-    def <=(t2: TypeConstraint) = Covariant(constraint, t2)
-    def <=(t2: Type) = Covariant(constraint, Invariant(t2))
     def <+(t2: TypeConstraint) = Alternative(constraint, t2)
     def <+(t2: Type) = Alternative(constraint, Invariant(t2))
 //    def <=(t2: Type) = Covariant(relation, t2)
 //    def <+(t2: TypeConstraint) = Alternative(relation, t2)
+  }
+
+  implicit class RichInvariant(val invariant: Invariant) extends AnyVal{
+    def <=(t2: TypeConstraint) = Covariant(invariant, t2)
+    def <=(t2: Type) = Covariant(invariant, Invariant(t2))
   }
 
 
@@ -207,6 +209,27 @@ package object types {
     println(constraints)
 
 
+
+    case class InCo(t: Type, co: Covariant)
+    case class And(c1: TypeConstraint, c2: TypeConstraint)
+
+    val x: (TypeConstraint, TypeConstraint) = null
+
+
+
+    x match{
+      case (i: Invariant, a: Alternative) => And(i, a)
+      case (Invariant(t), co @ Covariant(Invariant(t2), r)) =>
+        if(t == t2) {
+          InCo(t, co)
+        } else {
+
+          //find t in rhs // otherwise fail
+        }
+      case (Invariant(t), Invariant(t2)) => if(t == t2) Invariant(t) else { //fail }
+    } }
+
+
     Right(top)
 
 //    def prune(t: Type, branch: TypeConstraint): Option[Type] = {
@@ -243,4 +266,9 @@ package object types {
 //      case (acc, constraint) => acc.right.flatMap(t => lub(t, constraint))
 //    }
   }
+
+
+
+
+
 }
