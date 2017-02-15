@@ -2,7 +2,7 @@ package org.metaborg.entitylang.analysis.types
 
 import org.metaborg.entitylang.lang.ast.MExpression.SExp
 import org.metaborg.entitylang.lang.ast.MExpression.SExp.If3
-import org.metaborg.entitylang.lang.ast.MExpression.SLiteral.True0
+import org.metaborg.entitylang.lang.ast.MExpression.SLiteral.{Int1, True0}
 import org.metaborg.scalaterms.Origin
 
 object TypeSystem {
@@ -85,22 +85,26 @@ object TypeSystem {
 
 
   implicit val typeSystem = new TypeSystem[SExp, Type] {
-    lazy val rules = Seq[TopLevelTypingRule[SExp, Type]](if3, true0).map(_.andThen(_.widen[Type]))
+    lazy val rules = Seq[TopLevelTypingRule[SExp, Type]](if3, true0, int1).map(_.andThen(_.widen[Type]))
     override def infer(ast: SExp): Either[TypeError, Type] =
       rules
         .view
-        .map(pf => pf.andThen(x => x.run(this)).applyOrElse(ast, (_: SExp) => Left(TypeError(null, "Rule failed"))))
-        .collectFirst{case Right(t) => t}.toRight(TypeError(null, "Could not find valid rule to apply"))
+        .flatMap(pf => pf.andThen(x => Seq(x.run(this))).applyOrElse(ast, (_: SExp) => Seq.empty))
+        .headOption.getOrElse(Left(TypeError(null, "Could not find valid rule to apply")))
     override def getOrigin(t: SExp): Origin = t.origin
   }
 
   val if3: TopLevelTypingRule[SExp, Type] = TopLevelTypingRule[SExp, Type]{
     case If3(e1, e2, e3, _) =>
-      e1 hasType boolean
+      for(t1 <- e1 hasType boolean) yield t1
   }
 
   val true0: TopLevelTypingRule[SExp, Type] = TopLevelTypingRule[SExp, Type]{
     case True0(_) => new SuccessTypingRule(boolean)
+  }
+
+  val int1: TopLevelTypingRule[SExp, Type] = TopLevelTypingRule[SExp, Type]{
+    case Int1(_, _) => new SuccessTypingRule(int)
   }
 
   implicit class RichTypeRules[TermType, TypeType](val term: TermType)(implicit typeSystem: TypeSystem[TermType, TypeType]){
