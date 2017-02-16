@@ -1,6 +1,6 @@
 package org.metaborg.entitylang.analysis.types.typesystem.typingrule
 
-import org.metaborg.entitylang.analysis.types.typesystem.{TypeSystem, TypingRule}
+import org.metaborg.entitylang.analysis.types.typesystem.TypeSystem
 
 class SuccessTypingRule[TermType0, TypeType0, T0 <: TypeType0](t1: T0)(implicit  typeSystem: TypeSystem[TermType0, TypeType0]) extends TypingRule{
   override type TermType = TermType0

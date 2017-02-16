@@ -16,5 +16,7 @@ package object typesystem {
     if(ev.gt(t1, t2)) t1 else t2
 
 
-  @inline implicit def enrichedTermTypingRule[TermType, TypeType](term: TermType)(implicit typeSystem: TypeSystem[TermType, TypeType]) = new EnrichedTermTypingRule(term)
+
+
+  @inline implicit def enrichedTermTypingRule[TermType, TypeType, Term <: TermType](term: Term)(implicit typeSystem: TypeSystem[TermType, TypeType]) = new EnrichedTermTypingRule[TermType, TypeType, Term](term)
 }

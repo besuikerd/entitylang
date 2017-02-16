@@ -1,10 +1,10 @@
 package org.metaborg.entitylang.analysis.types.typesystem.entitylang
 
 import org.metaborg.entitylang.analysis.types.typesystem.{TopLevelTypingRule, TypeSystem, matching, success}
-import org.metaborg.entitylang.analysis.types.{BooleanType, IntType, NumericType, Type, boolean, float, int, string}
+import org.metaborg.entitylang.analysis.types.{BooleanType, FunctionType, IntType, NumericType, Type, boolean, float, int, string}
 import org.metaborg.entitylang.desugar._
 import org.metaborg.entitylang.lang.ast.MExpression.SExp
-import org.metaborg.entitylang.lang.ast.MExpression.SExp.If3
+import org.metaborg.entitylang.lang.ast.MExpression.SExp.{Apply2, If3, Ref1}
 import org.metaborg.entitylang.lang.ast.MExpression.SLiteral._
 import org.metaborg.entitylang.analysis.types.typesystem._
 import org.metaborg.entitylang.analysis.types.typesystem.entitylang.typingrule._
@@ -18,8 +18,14 @@ object EntityLangTypeSystem {
     string1,
     float1,
     unExp,
-    binExp
-  )
+    binExp,
+    apply2,
+    ref1
+  ).withBindings(Map(
+
+
+    "f" -> (int ~> string)
+  ))
 
   type Rule = TopLevelTypingRule[SExp, Type]
 
@@ -67,8 +73,7 @@ object EntityLangTypeSystem {
         for {
           t1 <- numeric(e1)
           t2 <- numeric(e2)
-          t3 <- rule.success(lub(t1, t2))
-        } yield t3
+        } yield lub(t1, t2)
 
       case Mod =>
         for{
@@ -107,9 +112,25 @@ object EntityLangTypeSystem {
           t2 <- e2.ofType[BooleanType]
         } yield boolean
 
-      case _ => fail(term, op + "Not implemented yet")
+      case _ => fail(term, op + " not implemented yet")
 //      case Merge =>
 //      case ChoiceLeft =>
     }
+  }
+
+  def apply2: Rule = {
+    case Apply2(e1, args, _) =>
+      for {
+        FunctionType(from, to) <- e1.ofType[FunctionType]("Function")
+        t1 <- args.value.head.infer
+        _ <- if(t1 != from) rule.mismatchedType(e1, from, t1) else success(t1)
+      } yield to
+  }
+
+  def ref1: Rule = {
+    case r @ Ref1(id1, _) =>
+      for {
+        t1 <- rule.fromTypeEnvironment(r, id1.string)
+      } yield t1
   }
 }
