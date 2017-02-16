@@ -111,6 +111,8 @@ package object types {
   val string = StringType()
   val boolean = BooleanType()
 
+
+
   val num = TypeClass("Num") //Alias("Num", int <= long <= float)
   val show = TypeClass("Show")
 //  val show = Alias("Show", num <+ string <+ boolean)

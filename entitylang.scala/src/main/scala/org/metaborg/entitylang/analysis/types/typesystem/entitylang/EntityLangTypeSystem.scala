@@ -8,8 +8,20 @@ import org.metaborg.entitylang.lang.ast.MExpression.SExp.{Apply2, If3, Ref1}
 import org.metaborg.entitylang.lang.ast.MExpression.SLiteral._
 import org.metaborg.entitylang.analysis.types.typesystem._
 import org.metaborg.entitylang.analysis.types.typesystem.entitylang.typingrule._
+import org.metaborg.entitylang.analysis.types.typesystem.typingrule.TypingRule
 
 object EntityLangTypeSystem {
+  val builtin = Map(
+    "min" -> (int ~>: int),
+    "max" -> (int ~>: int),
+    "avg" -> (int ~>: int),
+    "sum" -> (int ~>: int),
+    "conj" -> (boolean ~>: boolean),
+    "disj" -> (boolean ~>: boolean),
+
+    "epic" -> (int ~>: string ~>: boolean ~>: int)
+  )
+
   implicit val typeSystem = TypeSystem(
     if3,
     true0,
@@ -21,11 +33,7 @@ object EntityLangTypeSystem {
     binExp,
     apply2,
     ref1
-  ).withBindings(Map(
-
-
-    "f" -> (int ~> string)
-  ))
+  ).withBindings(builtin)
 
   type Rule = TopLevelTypingRule[SExp, Type]
 
@@ -112,19 +120,24 @@ object EntityLangTypeSystem {
           t2 <- e2.ofType[BooleanType]
         } yield boolean
 
-      case _ => fail(term, op + " not implemented yet")
+      case _ => rule.fail(term, op + " not implemented yet")
 //      case Merge =>
 //      case ChoiceLeft =>
     }
   }
 
   def apply2: Rule = {
-    case Apply2(e1, args, _) =>
-      for {
-        FunctionType(from, to) <- e1.ofType[FunctionType]("Function")
-        t1 <- args.value.head.infer
-        _ <- if(t1 != from) rule.mismatchedType(e1, from, t1) else success(t1)
-      } yield to
+    case a @ Apply2(e1, args, _) =>
+      args.value.foldLeft[TypingRule.Aux[SExp, Type, Type]](e1.infer){
+        case (acc, current) => for {
+          f <- acc.flatMap[FunctionType]{
+            case t @ FunctionType(_, _) => success(t)
+            case otherwise => rule.fail(current, "Expected Function, got " + otherwise)
+          }
+          t1 <- current.infer
+          _ <- if(t1 != f.t1) rule.mismatchedType(current, f.t1, t1) else rule.success(t1)
+        } yield f.t2
+      }
   }
 
   def ref1: Rule = {

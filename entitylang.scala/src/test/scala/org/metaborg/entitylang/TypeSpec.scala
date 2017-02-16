@@ -91,8 +91,14 @@ class TypeSpec extends FlatSpec{
     assertType("5 > 4")(boolean)
     illTyped("true > false")
 
-    assertType("f(2)")(string)
+    assertType("max(2)")(int)
     illTyped("f(true)")
+
+    assertType("epic(2)")(string ~>: boolean ~>: int)
+    assertType("epic(2 \"epic\")")(boolean ~>: int)
+    assertType("epic(2 \"epic\" true)")(int)
+    illTyped("""epic(2 "epic" true 4)""")
+
   }
 
   def inferType(exp: SExp): Either[TypeError, Type] =
