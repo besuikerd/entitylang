@@ -1,6 +1,11 @@
 package org.metaborg.entitylang.analysis
 
 
+import org.metaborg.entitylang.lang.ast.MModel.SOptionalType
+import org.metaborg.entitylang.lang.ast.MModel.SOptionalType.{DerivedType0, ExplicitType1}
+import org.metaborg.entitylang.lang.ast.MType.SPrimitiveType.{Boolean0, Float0, Int0, String0}
+import org.metaborg.entitylang.lang.ast.MType.{SPrimitiveType, SPrimitiveTypeWithMultiplicity}
+import org.metaborg.entitylang.lang.ast.MType.SPrimitiveTypeWithMultiplicity.{PrimitiveTypeWithDefaultMultiplicity1, PrimitiveTypeWithMultiplicity2}
 import org.metaborg.entitylang.util.MapExtensions.SeqValuesMapExtensions
 
 package object types {
@@ -34,6 +39,25 @@ package object types {
   sealed trait Type{
     def ~>(t2: Type) = FunctionType(this, t2)
     def ~>:(t2: Type) = t2 ~> this
+  }
+
+  object Type{
+    def apply(t: SOptionalType): Type = t match {
+      case ExplicitType1(primitivetypewithmultiplicity1, origin) => apply(primitivetypewithmultiplicity1)
+      case DerivedType0(origin) => top
+    }
+
+    def apply(t: SPrimitiveTypeWithMultiplicity): Type = t match {
+      case PrimitiveTypeWithMultiplicity2(primitivetype1, multiplicity2, origin) => apply(primitivetype1)
+      case PrimitiveTypeWithDefaultMultiplicity1(primitivetype1, origin) => apply(primitivetype1)
+    }
+
+    def apply(t: SPrimitiveType): Type = t match {
+      case Boolean0(origin) => boolean
+      case Int0(origin) => int
+      case Float0(origin) => float
+      case String0(origin) => string
+    }
   }
 
   sealed trait NumericType extends Type

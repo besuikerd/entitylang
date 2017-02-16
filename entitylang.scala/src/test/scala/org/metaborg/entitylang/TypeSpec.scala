@@ -1,9 +1,9 @@
 package org.metaborg.entitylang
 
+import org.metaborg.entitylang.analysis.Analyzer
 import org.metaborg.entitylang.analysis.types._
 import org.metaborg.entitylang.analysis.types.typesystem.entitylang.EntityLangTypeSystem
 import org.metaborg.entitylang.analysis.types.typesystem.error.TypeError
-import org.metaborg.entitylang.analysis.{Analyzer, Old_DataflowAnalysis, Old_TypeAnalysis}
 import org.metaborg.entitylang.lang.ast.MExpression.SExp
 import org.metaborg.entitylang.lang.ast.MExpression.SExp.If3
 import org.metaborg.entitylang.parser.{EntityLangParserProvider, SpoofaxParser}
@@ -12,18 +12,6 @@ import org.scalatest.FlatSpec
 import scala.reflect.ClassTag
 
 class TypeSpec extends FlatSpec{
-  "merge operator" should " merge multiplicities correctly" in {
-
-    import org.metaborg.entitylang.analysis.Old_TypeAnalysis._
-    val multiplicities: Seq[BaseMultiplicityType] = Seq(One, ZeroOrOne, ZeroOrMore, OneOrMore)
-
-    val merged = for{
-      c <- multiplicities
-      r <- multiplicities
-    } yield (c, r, MultiplicityType.merge(c, r))
-
-    merged.foreach{case (m1, m2, merged) => println(f"$m1%20s ++ $m2%-20s => $merged%-20s")}
-  }
 
   "strongly connected components" should " be calculated correctly" in {
 
@@ -40,8 +28,6 @@ class TypeSpec extends FlatSpec{
     val ast = EntityLangParserProvider.parser.parseResource("/test.etl")
     val model = Analyzer.analyze(ast)
     val scc = model.graph.stronglyConnectedComponents
-
-
     val cycles = scc.map(n => n.innerNodeTraverser.findCycle.map(_.nodes.toList.distinct).getOrElse(Seq(n)))
 
     cycles.foreach(println)

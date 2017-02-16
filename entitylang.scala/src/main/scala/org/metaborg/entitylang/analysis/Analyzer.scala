@@ -1,5 +1,7 @@
 package org.metaborg.entitylang.analysis
 
+import org.metaborg.entitylang.analysis.types._
+import org.metaborg.entitylang.analysis.types.typesystem.entitylang.EntityLangTypeSystem
 import org.metaborg.entitylang.desugar._
 import org.metaborg.entitylang.lang.ast.MExpression.{SExp, SLiteral}
 import org.metaborg.entitylang.lang.ast.MExpression.SExp._
@@ -16,8 +18,8 @@ object Analyzer {
   def analyze(ast: Start1): AnalysisModel = {
     val pass1 = collectDefinitions(ast)
     val pass2 = collectDerivedValueDependencies(pass1)
-//    val pass3 = deriveTypes(pass2)
-    pass2
+    val pass3 = deriveTypes(pass2)
+    pass3
   }
 
   def collectDefinitions(ast: Start1): AnalysisModel = {
@@ -30,14 +32,14 @@ object Analyzer {
           model.foldWith(member2.value)(model => {
             case attribute@Attribute2(name, tpe, origin) =>
               val entityFieldNode = AttributeNode(entityNode.name, name.string)
-              val entityFieldData = AttributeNodeData(BaseType(tpe), entityFieldNode, attribute)
+              val entityFieldData = AttributeNodeData(Type.apply(tpe), entityFieldNode, attribute)
               model.copy(
                 fields = model.fields + (entityFieldNode -> entityFieldData),
                 graph = model.graph + (entityNode ~> entityFieldNode)
               )
             case derivedValue@DerivedAttribute3(name, tpe, e, origin) =>
               val entityFieldNode = DerivedValueNode(entityNode.name, name.string)
-              val entityFieldNodeData = DerivedValueNodeData(BaseType(tpe), entityFieldNode, derivedValue)
+              val entityFieldNodeData = DerivedValueNodeData(Type.apply(tpe), entityFieldNode, derivedValue)
               model.copy(
                 fields = model.fields + (entityFieldNode -> entityFieldNodeData),
                 graph = model.graph + (entityNode ~> entityFieldNode)
@@ -114,62 +116,24 @@ object Analyzer {
     }
   }
 
-//  def deriveTypes(model: AnalysisModel): AnalysisModel = {
-//    val scss = model.graph.stronglyConnectedComponents.map(n => n.findCycle.map(_.nodes.toList.distinct).getOrElse(Seq(n)))
-//
-//    scss.foldLeft(model) {
-//      case (model, scc) =>
-//        if (scc.length == 1)
-//    }
-//  }
-//
-//
-//  def deriveType(model: AnalysisModel, e: SExp): BaseType = {
-//    import org.metaborg.entitylang.analysis.types.TypeDescription._
-//    def walk(model: AnalysisModel, e: SExp): (AnalysisModel, BaseType) = {
-//      implicit def baseTypeToResult(b: BaseType): (AnalysisModel, BaseType) = (model, b)
-//      e match {
-//        case literal: SLiteral => literal match {
-//          case Int1(int1, origin) => BaseType.int
-//          case Float1(float1, origin) => BaseType.float
-//          case String1(string1, origin) => BaseType.string
-//          case True0(origin) => BaseType.boolean
-//          case False0(origin) => BaseType.boolean
-//        }
-//        case BinExp(op, e1, e2) => {
-//          val (t1, t2) = (deriveType(model, e1), deriveType(model, e2))
-//          def expectType(expected: BaseType)(actual: BaseType) = ???
-//
-//          val description = t1.hasType(BaseType.int) && t2.hasType(BaseType.int) ==> BaseType.int
-//
-//          op match {
-//            case Add =>
-//            case Sub =>
-//            case Mul =>
-//            case Div =>
-//            case Mod =>
-//            case LessThan =>
-//            case LessThanEqual =>
-//            case GreaterThan =>
-//            case GreaterThanEqual =>
-//            case Equal =>
-//            case Inequal =>
-//            case And =>
-//            case Or =>
-//            case Merge =>
-//            case ChoiceLeft =>
-//          }
-//        }
-//
-//        case MemberAccess2(e1, field, origin) =>
-//        case UnExp(op, e1) =>
-//        case Apply2(e1, e2, origin) =>
-//        case Ref1(field, origin) =>
-//        //    case This0(origin) =>
-//      }
-//
-//
-//    }
-//    walk(model, e)._2
-//  }
+  def deriveTypes(model: AnalysisModel): AnalysisModel = {
+    val scss = model.graph.stronglyConnectedComponents.map(n => n.innerNodeTraverser.findCycle.map(_.nodes.toList.distinct).getOrElse(Seq(n)))
+    scss.foldLeft(model) {
+      case (model, scc) =>
+        if (scc.length == 1) {
+          val node = scc.head.value.asInstanceOf[EntityFieldNode]
+          model.fields(node) match{
+            case d @ DerivedValueNodeData(tpe, node, term) =>
+              val inferredType: Type = EntityLangTypeSystem.typeSystem.infer(term.exp3).fold(_ => TopType(), t => t)
+              model.copy(fields = model.fields +
+                (node -> d.copy(fieldType = inferredType))
+              )
+            case _ => model
+          }
+        } else{
+          model
+        }
+    }
+    model
+  }
 }
