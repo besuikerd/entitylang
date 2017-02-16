@@ -5,13 +5,6 @@ import org.metaborg.entitylang.util.MapExtensions.SeqValuesMapExtensions
 
 package object types {
 
-  sealed trait Type{
-    def ~>(t2: Type) = FunctionType(this, t2)
-    def ~>:(t2: Type) = t2 ~> this
-
-
-  }
-
   def ppType(t: TypeWithEnvironment): String = {
     t.env.constraints.mkString("\n") + "\n" + ppType(t.tpe)
   }
@@ -37,11 +30,28 @@ package object types {
     case TypeClass(name) => name
   }
 
+
+  sealed trait Type{
+    def ~>(t2: Type) = FunctionType(this, t2)
+    def ~>:(t2: Type) = t2 ~> this
+  }
+
+  sealed trait NumericType extends Type
+  implicit val numericOrdering: Ordering[NumericType] = new Ordering[NumericType]{
+    override def compare(x: NumericType, y: NumericType): Int = orderNum(x) - orderNum(y)
+
+    def orderNum(t: NumericType) = t match {
+      case IntType() => 0
+      case LongType() => 1
+      case FloatType() => 2
+    }
+  }
+
   case class StringType() extends Type
   case class BooleanType() extends Type
-  case class LongType() extends Type
-  case class IntType() extends Type
-  case class FloatType() extends Type
+  case class LongType() extends NumericType
+  case class IntType() extends NumericType
+  case class FloatType() extends NumericType
   case class EntityType(name: String) extends Type
   case class TopType() extends Type
   case class FunctionType(t1: Type, t2: Type) extends Type

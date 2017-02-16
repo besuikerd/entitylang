@@ -1,6 +1,7 @@
 package org.metaborg.entitylang
 
 import org.metaborg.entitylang.analysis.types._
+import org.metaborg.entitylang.analysis.types.typesystem.entitylang.EntityLangTypeSystem
 import org.metaborg.entitylang.analysis.types.typesystem.error.TypeError
 import org.metaborg.entitylang.analysis.{Analyzer, Old_DataflowAnalysis, Old_TypeAnalysis}
 import org.metaborg.entitylang.lang.ast.MExpression.SExp
@@ -75,9 +76,21 @@ class TypeSpec extends FlatSpec{
   "test type rules" should "test" in {
     assertType("if(true) false else true")(boolean)
     illTyped("if(true) 3 else false")
+
+    assertType("!true")(boolean)
+    assertType("!false")(boolean)
+
+    assertType("1 + 2")(int)
+    assertType("1.0 + 2.0")(float)
+    assertType("1 + 1.0")(float)
+    assertType("1.0 + 1")(float)
+    illTyped("1 + true")
+    illTyped("true + 1")
+
+
+    assertType("5 > 4")(boolean)
+    illTyped("true > false")
   }
-
-
 
   def inferType(exp: SExp): Either[TypeError, Type] =
     EntityLangTypeSystem.typeSystem.infer(exp)

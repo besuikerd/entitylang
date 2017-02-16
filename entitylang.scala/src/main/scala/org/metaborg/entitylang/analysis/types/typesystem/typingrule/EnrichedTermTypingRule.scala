@@ -4,7 +4,7 @@ import org.metaborg.entitylang.analysis.types.typesystem.{TypeSystem, TypingRule
 
 import scala.reflect.ClassTag
 
-class RichTypingRules[TermType, TypeType](val term: TermType)(implicit typeSystem: TypeSystem[TermType, TypeType]){
+class EnrichedTermTypingRule[TermType, TypeType](val term: TermType)(implicit typeSystem: TypeSystem[TermType, TypeType]){
   type Rule[T <: TypeType] = TypingRule.Aux[TermType, TypeType, T]
 
   def hasType[T <: TypeType](t: T): Rule[T] = new HasTypeTypingRule(term, t)

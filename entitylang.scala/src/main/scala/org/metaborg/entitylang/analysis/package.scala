@@ -36,10 +36,13 @@ package object analysis {
   }
 
   sealed trait BaseType
+
+  sealed trait NumericType
+
   case class StringType() extends BaseType
   case class BooleanType() extends BaseType
-  case class IntType() extends BaseType
-  case class FloatType() extends BaseType
+  case class IntType() extends BaseType with NumericType
+  case class FloatType() extends BaseType with NumericType
   case class EntityType(name: String) extends BaseType
   case class BottomType() extends BaseType
 
