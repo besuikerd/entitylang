@@ -1,9 +1,11 @@
 package org.metaborg.entitylang
 
 import org.metaborg.entitylang.analysis.types._
+import org.metaborg.entitylang.analysis.types.typesystem.error.TypeError
 import org.metaborg.entitylang.analysis.{Analyzer, Old_DataflowAnalysis, Old_TypeAnalysis}
+import org.metaborg.entitylang.lang.ast.MExpression.SExp
 import org.metaborg.entitylang.lang.ast.MExpression.SExp.If3
-import org.metaborg.entitylang.parser.EntityLangParserProvider
+import org.metaborg.entitylang.parser.{EntityLangParserProvider, SpoofaxParser}
 import org.scalatest.FlatSpec
 
 import scala.reflect.ClassTag
@@ -71,14 +73,28 @@ class TypeSpec extends FlatSpec{
   }
 
   "test type rules" should "test" in {
-    val e = EntityLangParserProvider.expParser.parse("if(true) false else true")
-    val e2 = EntityLangParserProvider.expParser.parse("if(5) true else false")
-    val res = TypeSystem.typeSystem.infer(e)
-
-    assertResult(Right(BooleanType()))(TypeSystem.typeSystem.infer(e))
-
-    println(res)
-    println(TypeSystem.typeSystem.infer(e2))
-
+    assertType("if(true) false else true")(boolean)
+    illTyped("if(true) 3 else false")
   }
+
+
+
+  def inferType(exp: SExp): Either[TypeError, Type] =
+    EntityLangTypeSystem.typeSystem.infer(exp)
+
+  def parseError(cause: SpoofaxParser.Error) = fail("Parse error: " + cause)
+
+  def parse(exp: String): Either[SpoofaxParser.Error, SExp] = EntityLangParserProvider.expParser.tryParse(exp)
+
+  def inferType(exp: String): Either[TypeError, Type] = parse(exp).fold(parseError, inferType)
+
+  def wellTyped(exp: String) =
+    inferType(exp).left.foreach(typeError)
+
+  def illTyped(exp: String) =
+    inferType(exp).right.foreach(t => fail(s"SExp is well typed: $t"))
+
+  def typeError(t: TypeError) = fail("type error @ " + t.errorString)
+
+  def assertType(exp: String)(t: Type) = inferType(exp).fold(typeError, t2 => if(t2 != t) fail(s"Expected type: $t, got: $t2"))
 }
