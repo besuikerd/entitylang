@@ -11,6 +11,8 @@ trait TermTypingRule[TermType0, TypeType0, T0 <: TypeType0] extends TypingRule{
 
   val term: TermType0
 
+  override def flatMap[U <: TypeType0](f: (T0) => Rule[U])(implicit typeSystem: TypeSystemT): Rule[U] = super.flatMap(f)
+
   def ofType[U <: T : ClassTag](implicit typeSystem: TypeSystemT): TermTypingRule[TermType0, TypeType0, U] = ofType(None)
   def ofType[U <: T : ClassTag](humanReadableName: String)(implicit typeSystem: TypeSystemT): TermTypingRule[TermType0, TypeType0, U] = ofType(Some(humanReadableName))
   def ofType[U <: T : ClassTag](humanReadableName: Option[String])(implicit typeSystem: TypeSystemT): TermTypingRule[TermType0, TypeType0, U] = {

@@ -39,14 +39,10 @@ object EntityLangTypeSystem {
 
   def if3: Rule = {
     case If3(e1, e2, e3, _) =>
-      e1.infer.ofType[BooleanType].flatMap{
-        t1 => matching(e2, e3)
-      }
-
-//      for{
-//        t1 <- e1.infer.ofType[BooleanType]
-//        t2 <- matching(e2, e3)
-//      } yield t2
+      for{
+        t1 <- e1.infer.ofType[BooleanType]
+        t2 <- matching(e2, e3)
+      } yield t2
   }
 
   def true0: Rule = {
