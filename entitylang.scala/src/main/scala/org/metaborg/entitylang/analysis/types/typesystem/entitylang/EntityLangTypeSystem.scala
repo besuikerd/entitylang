@@ -40,7 +40,7 @@ object EntityLangTypeSystem {
   def if3: Rule = {
     case If3(e1, e2, e3, _) =>
       for{
-        t1 <- e1.infer.ofType[BooleanType]
+        t1 <- e1.infer.ofType(boolean)
         t2 <- matching(e2, e3)
       } yield t2
   }
@@ -70,7 +70,7 @@ object EntityLangTypeSystem {
       op match {
         case Not =>
           for {
-            t1 <- e1.infer.ofType[BooleanType]
+            t1 <- e1.infer.ofType(boolean)
           } yield t1
       }
   }
@@ -85,8 +85,8 @@ object EntityLangTypeSystem {
 
       case Mod =>
         for{
-          t1 <- e1.infer.ofType[IntType]
-          t2 <- e2.infer.ofType[IntType]
+          t1 <- e1.infer.ofType(int)
+          t2 <- e2.infer.ofType(int)
         } yield int
 
       case CompareOperator(_) =>
@@ -109,14 +109,14 @@ object EntityLangTypeSystem {
         } yield boolean
       case And =>
         for {
-          t1 <- e1.infer.ofType[BooleanType]
-          t2 <- e2.infer.ofType[BooleanType]
+          t1 <- e1.infer.ofType(boolean)
+          t2 <- e2.infer.ofType(boolean)
         } yield boolean
 
       case Or =>
         for {
-          t1 <- e1.infer.ofType[BooleanType]
-          t2 <- e2.infer.ofType[BooleanType]
+          t1 <- e1.infer.ofType(boolean)
+          t2 <- e2.infer.ofType(boolean)
         } yield boolean
 
       case _ => rule.fail(term, op + " not implemented yet")
