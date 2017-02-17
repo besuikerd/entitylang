@@ -3,6 +3,8 @@ package org.metaborg.entitylang.analysis.types.typesystem.typingrule
 import org.metaborg.entitylang.analysis.types.typesystem.TypeSystem
 import org.metaborg.entitylang.analysis.types.typesystem.error.{GeneralTypeError, MismatchedTypeError, TypeError}
 
+import scala.reflect.ClassTag
+
 trait TypingRule {
   type TermType
   type TypeType
@@ -21,7 +23,7 @@ trait TypingRule {
 
   def run(implicit typeSystem: TypeSystemT): TypingResult
 
-  def bind(name: String, t: TypeType) = this
+  def bindTerm(t: TermType): TermTypingRule[TermType, TypeType, T] = new TermTypingRuleWrapper(this, t)
 
   def filter(f: T => Boolean)(implicit typeSystem: TypeSystemT): Rule[T] = new FilteredTypingRule[TermType, TypeType, T](this, f)
   def map[U <: TypeType](f: T => U)(implicit typeSystem: TypeSystemT): Rule[U] = new MappedTypingRule[TermType, TypeType, T, U](this, f)

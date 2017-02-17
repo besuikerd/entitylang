@@ -2,7 +2,7 @@ package org.metaborg.entitylang.analysis.types.typesystem.typingrule
 
 import org.metaborg.entitylang.analysis.types.typesystem.error.{GeneralTypeError, TypeError}
 
-class FromTypeEnvironmentTypingRule[TermType0, TypeType0](term: TermType0, name: String) extends TypingRule{
+class FromTypeEnvironmentTypingRule[TermType0, TypeType0](val term: TermType0, name: String) extends TermTypingRule[TermType0, TypeType0, TypeType0]{
   override type TermType = TermType0
   override type TypeType = TypeType0
   override type T = TypeType0

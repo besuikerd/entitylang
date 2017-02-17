@@ -2,6 +2,7 @@ package org.metaborg.entitylang.analysis
 
 import org.metaborg.entitylang.analysis.types._
 import org.metaborg.entitylang.analysis.types.typesystem.entitylang.EntityLangTypeSystem
+import org.metaborg.entitylang.analysis.types.typesystem.error.TypeError
 import org.metaborg.entitylang.desugar._
 import org.metaborg.entitylang.lang.ast.MExpression.{SExp, SLiteral}
 import org.metaborg.entitylang.lang.ast.MExpression.SExp._
@@ -49,11 +50,11 @@ object Analyzer {
         case relation@Relation6(entityRefLeft: EntityRef1, attributeRefLeft: AttributeRef1, multiplicityLeft, multiplicityRight, entityRefRight: EntityRef1, attributeRefRight: AttributeRef1, _) =>
           val entityNodeLeft = EntityNode(entityRefLeft.id1.string)
           val relationNodeLeft = RelationNode(entityNodeLeft.name, attributeRefLeft.id1.string)
-          val relationNodeDataLeft = RelationNodeData(EntityType(entityRefRight.id1.string), entityRefLeft, attributeRefLeft, multiplicityLeft, relation)
+          val relationNodeDataLeft = RelationNodeData(EntityType(entityRefRight.id1.string), entityRefLeft, attributeRefLeft, multiplicityLeft, relationNodeLeft, relation)
 
           val entityNodeRight = EntityNode(entityRefRight.id1.string)
           val relationNodeRight = RelationNode(entityNodeRight.name, attributeRefRight.id1.string)
-          val relationNodeDataRight = RelationNodeData(EntityType(entityRefLeft.id1.string), entityRefRight, attributeRefRight, multiplicityRight, relation)
+          val relationNodeDataRight = RelationNodeData(EntityType(entityRefLeft.id1.string), entityRefRight, attributeRefRight, multiplicityRight, relationNodeRight, relation)
 
           model.copy(
             fields = model.fields
@@ -123,17 +124,30 @@ object Analyzer {
         if (scc.length == 1) {
           val node = scc.head.value.asInstanceOf[EntityFieldNode]
           model.fields(node) match{
-            case d @ DerivedValueNodeData(tpe, node, term) =>
-              val inferredType: Type = EntityLangTypeSystem.typeSystem.infer(term.exp3).fold(_ => TopType(), t => t)
-              model.copy(fields = model.fields +
-                (node -> d.copy(fieldType = inferredType))
-              )
+            case d @ DerivedValueNodeData(tpe, node, term) => {
+              val scope = model.entityScope(node.entity)
+              val typeSystem = EntityLangTypeSystem.typeSystem.withBindings(scope)
+              val inferred = typeSystem.infer(term.exp3)
+              inferred match {
+                case Left(TypeError(origin, message)) =>
+                  model.reportError(message, origin)
+                case Right(inferredType) => {
+                  println(s"${node.entity}.${node.name} : $inferredType")
+                  tpe match{
+                    case TopType() => model.copy(fields = model.fields +
+                      (node -> d.copy(fieldType = inferredType))
+                    )
+                    case t if inferredType != t => model.reportError(s"Expected type: $t, got: $inferredType", term.exp3.origin)
+                    case t => model
+                  }
+                }
+              }
+            }
             case _ => model
           }
         } else{
           model
         }
     }
-    model
   }
 }

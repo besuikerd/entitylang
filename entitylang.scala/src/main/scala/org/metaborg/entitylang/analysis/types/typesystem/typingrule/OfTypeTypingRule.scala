@@ -4,14 +4,10 @@ import org.metaborg.entitylang.analysis.types.typesystem.TypeSystem
 
 import scala.reflect.{ClassTag, classTag}
 
-class OfTypeTypingRule[TermType0, TypeType0, T0 <: TypeType0: ClassTag](e: TermType0, humanReadableName: Option[String] = None)(implicit typeSystem: TypeSystem[TermType0, TypeType0]) extends TypingRule{
-  override type TermType = TermType0
-  override type TypeType = TypeType0
-  override type T = T0
-
+class OfTypeTypingRule[TermType0, TypeType0, T0 <: TypeType0: ClassTag](val term: TermType0, t: T0, humanReadableName: Option[String] = None)(implicit typeSystem: TypeSystem[TermType0, TypeType0]) extends TermTypingRule[TermType0, TypeType0, T0]{
   val cls = classTag[T0].runtimeClass.asInstanceOf[Class[T]]
 
   override def run(implicit typeSystem: TypeSystemT): TypingResult = {
-    typeSystem.infer(e).right.flatMap(t => if(cls.isInstance(t)) Right(cls.cast(t)) else typeError(e, s"Expected type: ${humanReadableName.getOrElse(cls.getTypeName)}, got: $t"))
+    typeSystem.infer(term).right.flatMap(t => if(cls.isInstance(t)) Right(cls.cast(t)) else typeError(term, s"Expected type: ${humanReadableName.getOrElse(cls.getTypeName)}, got: $t"))
   }
 }

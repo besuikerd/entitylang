@@ -37,28 +37,6 @@ class TypeSpec extends FlatSpec{
     scc.foreach(println)
   }
 
-  "type checker" should "infer types of expressions correctly" in {
-    import analysis.types._
-
-//    val add = num("x") =>: num("y") =>: "x" ~>: "y" ~>: lub("x", "y")
-    val identity = "x" ~>: "x"
-
-    println(add)
-    println(ppType(add))
-
-    implicit val env = TypingEnvironment.apply()
-
-//    println(ppType(reduceByApplication(add, int)))
-//    println(ppType(reduceByApplication(add, string)))
-    println(ppType(TypeWithEnvironment.reduce(identity, int)))
-
-
-    val add1 = TypeWithEnvironment.reduce(add, string)
-    val add2 = add1.reduce(float)
-    println(ppType(add1))
-    println(ppType(add2))
-  }
-
   "test type rules" should "test" in {
     assertType("if(true) false else true")(boolean)
     illTyped("if(true) 3 else false")
@@ -80,9 +58,9 @@ class TypeSpec extends FlatSpec{
     assertType("max(2)")(int)
     illTyped("f(true)")
 
-    assertType("epic(2)")(string ~>: boolean ~>: int)
-    assertType("epic(2 \"epic\")")(boolean ~>: int)
-    assertType("epic(2 \"epic\" true)")(int)
+    assertType("""epic(2)""")(string ~>: boolean ~>: int)
+    assertType("""epic(2 "epic")""")(boolean ~>: int)
+    assertType("""epic(2 "epic" true)""")(int)
     illTyped("""epic(2 "epic" true 4)""")
 
   }

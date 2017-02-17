@@ -9,7 +9,7 @@
 
   <properties>
     <scala.version>2.11.8</scala.version>
-    <!--<skipTests>true</skipTests>-->
+    <skipTests>true</skipTests>
   </properties>
 
   <dependencies>

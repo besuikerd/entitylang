@@ -10,9 +10,6 @@ import org.metaborg.entitylang.util.MapExtensions.SeqValuesMapExtensions
 
 package object types {
 
-  def ppType(t: TypeWithEnvironment): String = {
-    t.env.constraints.mkString("\n") + "\n" + ppType(t.tpe)
-  }
   def ppType(t: Type): String = t match {
     case StringType() => "string"
     case BooleanType() => "boolean"
@@ -125,7 +122,7 @@ package object types {
   }
 
   implicit def stringToTypeVariable(s: String): TypeVariable = TypeVariable(s)
-  def lub(t1: TypeVariable, t2: TypeVariable): Type = LeastUpperBound(t1, t2)
+//  def lub(t1: TypeVariable, t2: TypeVariable): Type = LeastUpperBound(t1, t2)
 
 
   val top = TopType()
@@ -136,6 +133,7 @@ package object types {
   val boolean = BooleanType()
 
 
+/*
 
   val num = TypeClass("Num") //Alias("Num", int <= long <= float)
   val show = TypeClass("Show")
@@ -268,41 +266,42 @@ package object types {
 
     Right(top)
 
-//    def prune(t: Type, branch: TypeConstraint): Option[Type] = {
-//      branch match{
-//        case Invariant(t2) if t == t2 => Some(t)
-//        case Alternative(left, right) => prune(t, left).map((prune(t, right))
-//        case Covariant(left, right) =>
-//        case _ => None
-//      }
-//    }
-//
-//    def lub(c1: TypeConstraint, c2: TypeConstraint): Type = {
-//      (c1, c2) match{
-//        case (Invariant(t), Covariant(left, right)) =>
-//        case (Invariant(t), Alternative(left, right)) =>
-//        case (i1: Invariant, i2: Invariant) => Alternative(i1, i2)
-//        case (t: TypeClass, c2) => lub(env.typeClasses.get(t.name).get, c2)
-//        case (c1, t: TypeClass) => lub(c1, env.typeClasses.get(t.name).get)
-//      }
-//
-//
-//      val res = constraint match {
-//        case co @ Covariant(t1, t2) => tpe match{
-//
-//        }
-//        case Alternative(t1, t2) => lub(tpe, t1).left.flatMap(_ => lub(tpe, t2))
-//        case i @ Invariant(t) => if(t == tpe) i else Right(Alternative(Invariant(tpe), i))
-//        case cls @ TypeClass(name) => env.typeClasses.get(name).toRight(cls).right.flatMap(c => lub(tpe, c))
-//      }
-//      res
-//    }
-//
-//    constraints.foldLeft[Either[TypeConstraint, Type]](Right(top)){
-//      case (acc, constraint) => acc.right.flatMap(t => lub(t, constraint))
-//    }
+    def prune(t: Type, branch: TypeConstraint): Option[Type] = {
+      branch match{
+        case Invariant(t2) if t == t2 => Some(t)
+        case Alternative(left, right) => prune(t, left).map((prune(t, right))
+        case Covariant(left, right) =>
+        case _ => None
+      }
+    }
+
+    def lub(c1: TypeConstraint, c2: TypeConstraint): Type = {
+      (c1, c2) match{
+        case (Invariant(t), Covariant(left, right)) =>
+        case (Invariant(t), Alternative(left, right)) =>
+        case (i1: Invariant, i2: Invariant) => Alternative(i1, i2)
+        case (t: TypeClass, c2) => lub(env.typeClasses.get(t.name).get, c2)
+        case (c1, t: TypeClass) => lub(c1, env.typeClasses.get(t.name).get)
+      }
+
+
+      val res = constraint match {
+        case co @ Covariant(t1, t2) => tpe match{
+
+        }
+        case Alternative(t1, t2) => lub(tpe, t1).left.flatMap(_ => lub(tpe, t2))
+        case i @ Invariant(t) => if(t == tpe) i else Right(Alternative(Invariant(tpe), i))
+        case cls @ TypeClass(name) => env.typeClasses.get(name).toRight(cls).right.flatMap(c => lub(tpe, c))
+      }
+      res
+    }
+
+    constraints.foldLeft[Either[TypeConstraint, Type]](Right(top)){
+      case (acc, constraint) => acc.right.flatMap(t => lub(t, constraint))
+    }
   }
 
+*/
 
 
 

@@ -12,3 +12,9 @@ class NumericTypingRule(e: SExp) extends EntityLangTypingRule{
       case otherwise => typeError(e, "Expected numeric type, got " + otherwise)
     }
 }
+
+object NumericTypingRule{
+  import org.metaborg.entitylang.analysis.types.typesystem._
+  import org.metaborg.entitylang.analysis.types._
+  def numeric(e: SExp)(implicit typeSystem: TypeSystem[SExp, Type]) = e.infer.ofType[NumericType]
+}

@@ -15,5 +15,5 @@ class RichTypingRule[TermType, TypeType](implicit val typeSystem: TypeSystem[Ter
   def matching(terms: TermType*): TypingRule.Aux[TermType, TypeType, TypeType] = new MatchingTypingRule[TermType, TypeType](terms:_*)
 
 
-  def fromTypeEnvironment[Term <: TermType](term: Term, name: String): Rule[TypeType] = new FromTypeEnvironmentTypingRule(term, name)
+  def fromTypeEnvironment[Term <: TermType](term: Term, name: String): TermTypingRule[TermType, TypeType, TypeType] = new FromTypeEnvironmentTypingRule(term, name)
 }

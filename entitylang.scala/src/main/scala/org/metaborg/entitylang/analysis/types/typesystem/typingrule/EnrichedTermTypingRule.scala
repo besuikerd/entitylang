@@ -8,8 +8,8 @@ class EnrichedTermTypingRule[TermType, TypeType, Term <: TermType](val term: Ter
   type Rule[T <: TypeType] = TypingRule.Aux[TermType, TypeType, T]
 
   def hasType[T <: TypeType](t: T): Rule[T] = new HasTypeTypingRule(term, t)
-  def ofType[T <: TypeType: ClassTag](humanReadableName: String): Rule[T] = new OfTypeTypingRule[TermType, TypeType, T](term, Some(humanReadableName))
-  def ofType[T <: TypeType: ClassTag]: Rule[T] = new OfTypeTypingRule[TermType, TypeType, T](term, None)
-  def infer: Rule[TypeType] = new InferTypingRule(term)
-  def fail(message: String): Rule[TypeType] = new FailTypingRule(term, message)
+//  def ofType[T <: TypeType: ClassTag](humanReadableName: String): Rule[T] = new OfTypeTypingRule[TermType, TypeType, T](term, Some(humanReadableName))
+//  def ofType[T <: TypeType: ClassTag]: Rule[T] = new OfTypeTypingRule[TermType, TypeType, T](term, None)
+  def infer: TermTypingRule[TermType, TypeType, TypeType] = new InferTypingRule(term)
+  def fail(message: String): TermTypingRule[TermType, TypeType, TypeType] = new FailTypingRule[TermType, TypeType, TypeType](term, message)
 }
