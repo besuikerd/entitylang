@@ -129,7 +129,7 @@ object Analyzer {
 
           ordered match{
             case Some(order) =>
-              model
+              order.foldLeft(model)(inferFieldType)
 
             //no order found; types cannot be inferred
             case None => cycle.foldLeft(model){
@@ -140,33 +140,35 @@ object Analyzer {
           }
         }
 
-        case Right(node) => {
-          model.fields(node.value.asInstanceOf[EntityFieldNode]) match{
-            case d @ DerivedValueNodeData(tpe, node, term) => {
-              val scope = model.entityScope(node.entity) ++ model.fields.map{
-                case (field, data) => s"${field.entity}.${field.name}" -> data.fieldType
-              }
-              val typeSystem = EntityLangTypeSystem.typeSystem.withBindings(scope)
-              val inferred = typeSystem.infer(term.exp3)
-              inferred match {
-                case Left(TypeError(origin, message)) =>
-                  model.reportError(message, origin)
-                case Right(inferredType) => {
-                  println(s"${node.entity}.${node.name} : $inferredType")
-                  tpe match{
-                    case TopType() => model.copy(fields = model.fields +
-                      (node -> d.copy(fieldType = inferredType))
-                    )
-                    case t if inferredType != t => model.reportError(s"Expected type: $t, got: $inferredType", term.exp3.origin)
-                    case t => model
-                  }
-                }
-              }
+        case Right(node) => inferFieldType(model, node)
+      }
+    }
+  }
+
+  def inferFieldType(model: AnalysisModel, node: AnalysisNode): AnalysisModel = {
+    model.fields(node.value.asInstanceOf[EntityFieldNode]) match{
+      case d @ DerivedValueNodeData(tpe, node, term) => {
+        val scope = model.entityScope(node.entity) ++ model.fields.map{
+          case (field, data) => s"${field.entity}.${field.name}" -> data.fieldType
+        }
+        val typeSystem = EntityLangTypeSystem.typeSystem.withBindings(scope)
+        val inferred = typeSystem.infer(term.exp3)
+        inferred match {
+          case Left(TypeError(origin, message)) =>
+            model.reportError(message, origin)
+          case Right(inferredType) => {
+            println(s"${node.entity}.${node.name} : $inferredType")
+            tpe match{
+              case TopType() => model.copy(fields = model.fields +
+                (node -> d.copy(fieldType = inferredType))
+              )
+              case t if inferredType != t => model.reportError(s"Expected type: $t, got: $inferredType", term.exp3.origin)
+              case t => model
             }
-            case _ => model
           }
         }
       }
+      case _ => model
     }
   }
 }

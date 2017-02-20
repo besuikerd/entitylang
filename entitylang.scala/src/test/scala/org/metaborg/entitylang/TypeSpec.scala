@@ -105,7 +105,7 @@ class TypeSpec extends FlatSpec{
         |entity A{
         |  amount: Int
         |  weight: Float
-        |  value = children.value + amount * weight
+        |  value: Float = children.value + amount * weight
         |}
         |
         |relation A.parent 1 <-> * A.children
