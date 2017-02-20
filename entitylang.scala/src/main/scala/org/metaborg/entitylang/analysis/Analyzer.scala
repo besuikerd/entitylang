@@ -125,7 +125,9 @@ object Analyzer {
           val node = scc.head.value.asInstanceOf[EntityFieldNode]
           model.fields(node) match{
             case d @ DerivedValueNodeData(tpe, node, term) => {
-              val scope = model.entityScope(node.entity)
+              val scope = model.entityScope(node.entity) ++ model.fields.map{
+                case (field, data) => s"${field.entity}.${field.name}" -> data.fieldType
+              }
               val typeSystem = EntityLangTypeSystem.typeSystem.withBindings(scope)
               val inferred = typeSystem.infer(term.exp3)
               inferred match {

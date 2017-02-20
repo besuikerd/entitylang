@@ -78,7 +78,7 @@ class TypeSpec extends FlatSpec{
         | d = left.a + a > 4
         |}
         |
-        |relation A.left * <-> * B.right
+        |relation A.right * <-> * B.left
       """.stripMargin
     val ast = EntityLangParserProvider.parser.parse(program)
     val model = Analyzer.analyze(ast)
@@ -98,7 +98,7 @@ class TypeSpec extends FlatSpec{
   def assertFieldType(model: AnalysisModel)(entity: String, field: String)(t: Type) = model.fields.collectFirst{
     case (fieldNode, dataNode) if fieldNode.entity == entity && fieldNode.name == field => dataNode.fieldType
   } match{
-    case Some(t2) => assertResult(t2)(t)
+    case Some(t2) => assertResult(t)(t2)
     case None => fail(s"Field not found: $entity.$field")
   }
 
