@@ -7,9 +7,10 @@ import org.metaborg.entitylang.analysis.types.typesystem.error.TypeError
 import org.metaborg.entitylang.lang.ast.MExpression.SExp
 import org.metaborg.entitylang.lang.ast.MExpression.SExp.If3
 import org.metaborg.entitylang.parser.{EntityLangParserProvider, SpoofaxParser}
-import org.scalatest.FlatSpec
+import org.scalatest.{Assertion, FlatSpec}
 
 import scala.reflect.ClassTag
+import scalax.collection.GraphPredef
 
 class TypeSpec extends FlatSpec{
 
@@ -85,9 +86,7 @@ class TypeSpec extends FlatSpec{
         |
         |relation A.right * <-> * B.left
       """.stripMargin
-    val ast = EntityLangParserProvider.parser.parse(program)
-    val model = Analyzer.analyze(ast)
-    val fieldAssert = assertFieldType(model) _
+    val fieldAssert = createFieldAssert(program)
 
     fieldAssert("A", "a")(int)
     fieldAssert("A", "b")(boolean)
@@ -98,6 +97,32 @@ class TypeSpec extends FlatSpec{
     fieldAssert("B", "b")(boolean)
     fieldAssert("B", "c")(int)
     fieldAssert("B", "d")(boolean)
+  }
+
+  it should "typecheck cyclic dependencies" in {
+    val program =
+      """
+        |entity A{
+        |  amount: Int
+        |  weight: Float
+        |  value = children.value + amount * weight
+        |}
+        |
+        |relation A.parent 1 <-> * A.children
+      """.stripMargin
+    val fieldAssert = createFieldAssert(program)
+    fieldAssert("A", "amount")(int)
+    fieldAssert("A", "weight")(float)
+    fieldAssert("A", "value")(float)
+  }
+
+  def createFieldAssert(program: String): (String, String) => (Type) => Assertion = {
+    val ast = EntityLangParserProvider.parser.parse(program)
+    val model = Analyzer.analyze(ast)
+    if(model.errors.isEmpty)
+      assertFieldType(model)
+    else
+      (_, _) => (_) => fail(model.errors.head.message)
   }
 
   def assertFieldType(model: AnalysisModel)(entity: String, field: String)(t: Type) = model.fields.collectFirst{

@@ -25,9 +25,9 @@ class RichAnalysisGraph(val graph: AnalysisGraph) extends AnyVal {
   /**
     * calculates the set of strongly connected components
     * based off http://stackoverflow.com/questions/15877819/functional-implementation-of-tarjans-strongly-connected-components-algorithm
-    * @return sequence of representatives for each strongly connected component
+    * @return sequence of components; either a cycle or a single node
     */
-  def stronglyConnectedComponents: Seq[Seq[AnalysisNode]] = {
+  def stronglyConnectedComponents: Seq[Either[Seq[AnalysisNode], AnalysisNode]] = {
     type SCSS = scala.collection.mutable.Map[AnalysisNode, AnalysisNode]
     def dfs(node: AnalysisNode, path: Map[AnalysisNode, Int], scss: SCSS): SCSS = {
 
@@ -61,16 +61,23 @@ class RichAnalysisGraph(val graph: AnalysisGraph) extends AnyVal {
     }
     val representatives = scss.values.toList.distinct
     representatives.map {
-      n => n.innerNodeTraverser.findCycle.flatMap{
-        cycle => {
-          val nodes = cycle.nodes.toList.distinct
-          if(nodes.contains(n)){
-            Some(nodes)
-          } else {
-            None
-          }
-        }
-      }.getOrElse(Seq(n))
+      n => {
+        //graph library fails to find cycles of size 1 so manual check is needed
+        val singleNodeCycle = n.outgoing.find(e => e.to == n).map(_ => Left(Seq(n)))
+        singleNodeCycle.getOrElse(
+          n.innerNodeTraverser.findCycle.flatMap{
+            cycle => {
+              val nodes = cycle.nodes.toList.distinct
+              if(nodes.contains(n)){
+                Some(Left(nodes))
+              } else {
+                None
+              }
+            }
+          }.getOrElse(Right(n))
+        )
+
+      }
     }
   }
 }
