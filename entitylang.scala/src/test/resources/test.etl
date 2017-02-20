@@ -8,6 +8,9 @@ entity Assignment{
   name: String
   minimum: Float?
 
+  x = y
+  y = x
+
   p = submissions.q
 }
 
@@ -20,7 +23,7 @@ entity Submission{
 
   q = assignment
 
-  pass2 = pass || avg > 5.5
+  pass2 = pass || average > 5.5
 }
 
 

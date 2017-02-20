@@ -24,9 +24,10 @@ class RichAnalysisGraph(val graph: AnalysisGraph) extends AnyVal {
 
   /**
     * calculates the set of strongly connected components
+    * based off http://stackoverflow.com/questions/15877819/functional-implementation-of-tarjans-strongly-connected-components-algorithm
     * @return sequence of representatives for each strongly connected component
     */
-  def stronglyConnectedComponents: Seq[AnalysisNode] = {
+  def stronglyConnectedComponents: Seq[Seq[AnalysisNode]] = {
     type SCSS = scala.collection.mutable.Map[AnalysisNode, AnalysisNode]
     def dfs(node: AnalysisNode, path: Map[AnalysisNode, Int], scss: SCSS): SCSS = {
 
@@ -58,7 +59,18 @@ class RichAnalysisGraph(val graph: AnalysisGraph) extends AnyVal {
         dfs(n, Map.empty, scss)
       }
     }
-
-    scss.values.toSeq.distinct
+    val representatives = scss.values.toList.distinct
+    representatives.map {
+      n => n.innerNodeTraverser.findCycle.flatMap{
+        cycle => {
+          val nodes = cycle.nodes.toList.distinct
+          if(nodes.contains(n)){
+            Some(nodes)
+          } else {
+            None
+          }
+        }
+      }.getOrElse(Seq(n))
+    }
   }
 }

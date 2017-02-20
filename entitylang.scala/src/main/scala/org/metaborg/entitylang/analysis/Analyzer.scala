@@ -4,15 +4,14 @@ import org.metaborg.entitylang.analysis.types._
 import org.metaborg.entitylang.analysis.types.typesystem.entitylang.EntityLangTypeSystem
 import org.metaborg.entitylang.analysis.types.typesystem.error.TypeError
 import org.metaborg.entitylang.desugar._
-import org.metaborg.entitylang.lang.ast.MExpression.{SExp, SLiteral}
+import org.metaborg.entitylang.lang.ast.MExpression.SExp
 import org.metaborg.entitylang.lang.ast.MExpression.SExp._
-import org.metaborg.entitylang.lang.ast.MExpression.SLiteral._
-import org.metaborg.entitylang.lang.ast.Mentitylang.SStart.Start1
 import org.metaborg.entitylang.lang.ast.MModel.SAttribute.{Attribute2, DerivedAttribute3}
 import org.metaborg.entitylang.lang.ast.MModel.SAttributeRef.AttributeRef1
 import org.metaborg.entitylang.lang.ast.MModel.SEntityRef.EntityRef1
 import org.metaborg.entitylang.lang.ast.MModel.SModel.{Entity2, Relation6}
-
+import org.metaborg.entitylang.lang.ast.Mentitylang.SStart.Start1
+import org.metaborg.entitylang.util.seqExtensions
 import scalax.collection.GraphPredef._
 
 object Analyzer {
@@ -118,7 +117,7 @@ object Analyzer {
   }
 
   def deriveTypes(model: AnalysisModel): AnalysisModel = {
-    val scss = model.graph.stronglyConnectedComponents.map(n => n.innerNodeTraverser.findCycle.map(_.nodes.toList.distinct).getOrElse(Seq(n)))
+    val scss = model.graph.stronglyConnectedComponents
     scss.foldLeft(model) {
       case (model, scc) =>
         if (scc.length == 1) {
@@ -148,7 +147,23 @@ object Analyzer {
             case _ => model
           }
         } else{
-          model
+          //arrange the cycle so that a known type is at the head of the cycle
+          val ordered = scc.reorderCyclic { node =>
+            val d = model.fields(node.value.asInstanceOf[EntityFieldNode])
+            d.fieldType != TopType()
+          }
+
+          ordered match{
+            case Some(order) =>
+              model
+
+            //no order found; types cannot be inferred
+            case None => scc.foldLeft(model){
+              case (model, field) =>
+                val fieldData = model.fields(field.value.asInstanceOf[EntityFieldNode])
+                model.reportError("Cycle in found in derived values; type could not be inferred", fieldData.term.origin)
+            }
+          }
         }
     }
   }

@@ -25,14 +25,19 @@ class TypeSpec extends FlatSpec{
         |  e = d + 1
         |}
       """.stripMargin
+
+    val p2 =
+      """
+        |entity A {
+        | x: Boolean = y
+        | y = x
+        |}
+      """.stripMargin
+
+//    val ast = EntityLangParserProvider.parser.parse(p2)
     val ast = EntityLangParserProvider.parser.parseResource("/test.etl")
     val model = Analyzer.analyze(ast)
     val scc = model.graph.stronglyConnectedComponents
-    val cycles = scc.map(n => n.innerNodeTraverser.findCycle.map(_.nodes.toList.distinct).getOrElse(Seq(n)))
-
-    cycles.foreach(println)
-
-    println("---")
 
     scc.foreach(println)
   }

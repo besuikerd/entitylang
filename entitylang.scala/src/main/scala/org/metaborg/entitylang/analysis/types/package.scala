@@ -6,7 +6,6 @@ import org.metaborg.entitylang.lang.ast.MModel.SOptionalType.{DerivedType0, Expl
 import org.metaborg.entitylang.lang.ast.MType.SPrimitiveType.{Boolean0, Float0, Int0, String0}
 import org.metaborg.entitylang.lang.ast.MType.{SPrimitiveType, SPrimitiveTypeWithMultiplicity}
 import org.metaborg.entitylang.lang.ast.MType.SPrimitiveTypeWithMultiplicity.{PrimitiveTypeWithDefaultMultiplicity1, PrimitiveTypeWithMultiplicity2}
-import org.metaborg.entitylang.util.MapExtensions.SeqValuesMapExtensions
 
 package object types {
 

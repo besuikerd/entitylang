@@ -6,7 +6,7 @@ import org.metaborg.entitylang.lang.ast.MModel.SAttributeRef.AttributeRef1
 import org.metaborg.entitylang.lang.ast.MModel.SEntityRef.EntityRef1
 import org.metaborg.entitylang.lang.ast.MModel.SModel.{Entity2, Relation6}
 import org.metaborg.entitylang.lang.ast.MType.SMultiplicity
-import org.metaborg.scalaterms.TermLike
+import org.metaborg.scalaterms.{HasOrigin, TermLike}
 
 import scalax.collection.{Graph, GraphEdge}
 
@@ -30,14 +30,14 @@ package object analysis {
   }
 
   sealed trait EntityFieldNodeData{
-    type TermType <: TermLike
+    type TermType <: TermLike with HasOrigin
     val fieldType: Type
     val node: EntityFieldNode
     val term: TermType
   }
 
   object EntityFieldNodeData{
-    trait Aux[T <: TermLike] extends EntityFieldNodeData{
+    trait Aux[T <: TermLike with HasOrigin] extends EntityFieldNodeData{
       type TermType = T
     }
   }
