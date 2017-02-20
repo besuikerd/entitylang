@@ -148,7 +148,8 @@ object EntityLangTypeSystem {
   def memberAccess2: Rule = {
     case m @ MemberAccess2(e, id, _) =>
       for {
-        t1 <- rule.fromTypeEnvironment(e, id.string).ofType[EntityType]("Entity Type")
-      } yield t1
+        EntityType(name) <- e.infer.ofType[EntityType]("Entity Type")
+        t2 <- rule.fromTypeEnvironment(id, s"$name.${id.string}")
+      } yield t2
   }
 }

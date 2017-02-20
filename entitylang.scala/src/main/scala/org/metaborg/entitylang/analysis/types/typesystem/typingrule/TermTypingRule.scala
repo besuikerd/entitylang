@@ -1,10 +1,11 @@
 package org.metaborg.entitylang.analysis.types.typesystem.typingrule
 
 import org.metaborg.entitylang.analysis.types.typesystem._
+import org.metaborg.scalaterms.HasOrigin
 
 import scala.reflect.{ClassTag, classTag}
 
-trait TermTypingRule[TermType0, TypeType0, T0 <: TypeType0] extends TypingRule{
+trait TermTypingRule[TermType0 <: HasOrigin, TypeType0, T0 <: TypeType0] extends TypingRule{
   override type TermType = TermType0
   override type TypeType = TypeType0
   override type T = T0

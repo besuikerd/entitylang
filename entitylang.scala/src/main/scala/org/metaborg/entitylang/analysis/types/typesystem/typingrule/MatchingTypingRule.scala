@@ -1,6 +1,8 @@
 package org.metaborg.entitylang.analysis.types.typesystem.typingrule
 
-class MatchingTypingRule[TermType0, TypeType0](terms: TermType0*) extends TypingRule {
+import org.metaborg.scalaterms.HasOrigin
+
+class MatchingTypingRule[TermType0 <: HasOrigin, TypeType0](terms: TermType0*) extends TypingRule {
   override type TermType = TermType0
   override type TypeType = TypeType0
   override type T = TypeType0

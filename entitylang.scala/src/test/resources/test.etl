@@ -18,9 +18,6 @@ entity Submission{
   childPass = children.pass
   average = avg(children.grade)
 
-
-
-
   q = assignment
 
   pass2 = pass || avg > 5.5

@@ -37,7 +37,7 @@ class TypeSpec extends FlatSpec{
     scc.foreach(println)
   }
 
-  "test type rules" should "test" in {
+  "Expressions" should "typecheck" in {
     assertType("if(true) false else true")(boolean)
     illTyped("if(true) 3 else false")
 

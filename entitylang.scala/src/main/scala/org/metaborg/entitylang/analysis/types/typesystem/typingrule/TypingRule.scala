@@ -2,11 +2,12 @@ package org.metaborg.entitylang.analysis.types.typesystem.typingrule
 
 import org.metaborg.entitylang.analysis.types.typesystem.TypeSystem
 import org.metaborg.entitylang.analysis.types.typesystem.error.{GeneralTypeError, MismatchedTypeError, TypeError}
+import org.metaborg.scalaterms.HasOrigin
 
 import scala.reflect.ClassTag
 
 trait TypingRule {
-  type TermType
+  type TermType <: HasOrigin
   type TypeType
   type T <: TypeType
 
@@ -17,8 +18,8 @@ trait TypingRule {
 
   def widen[U >: T <: TypeType] = this.asInstanceOf[TypingRule.Aux[TermType, TypeType, U]]
 
-  def typeError(term: TermType, msg: String)(implicit typeSystem: TypeSystemT): TypingResult = Left(GeneralTypeError(typeSystem.getOrigin(term), msg))
-  def typeError(term: TermType, expected: TypeType, got: TypeType)(implicit typeSystem: TypeSystemT) = new MismatchedTypeError(typeSystem.getOrigin(term), expected, got)
+  def typeError(term: HasOrigin, msg: String)(implicit typeSystem: TypeSystemT): TypingResult = Left(GeneralTypeError(term.origin, msg))
+  def typeError(term: HasOrigin, expected: TypeType, got: TypeType)(implicit typeSystem: TypeSystemT) = new MismatchedTypeError(term.origin, expected, got)
   def internalError(msg: String) = Left(GeneralTypeError(null, msg))
 
   def run(implicit typeSystem: TypeSystemT): TypingResult
