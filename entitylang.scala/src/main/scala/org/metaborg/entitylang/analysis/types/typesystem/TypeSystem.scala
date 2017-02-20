@@ -19,7 +19,7 @@ class TypeSystemImpl[TermType <: HasOrigin, TypeType](val rules: Seq[TopLevelTyp
   override def infer(ast: TermType): Either[TypeError, TypeType] =
     rules
       .view
-      .flatMap(pf => pf.andThen(x => Seq(x.run(this))).applyOrElse(ast, (_: TermType) => Seq.empty))
+      .flatMap(pf => pf(this).andThen(x => Seq(x.run(this))).applyOrElse(ast, (_: TermType) => Seq.empty))
       .headOption.getOrElse(Left(GeneralTypeError(ast.origin, "Could not find valid typing rule to apply for term " + ast)))
 
   override def withBinding(name: String, t: TypeType) = new TypeSystemImpl[TermType, TypeType](rules, typeEnvironment + (name -> t))

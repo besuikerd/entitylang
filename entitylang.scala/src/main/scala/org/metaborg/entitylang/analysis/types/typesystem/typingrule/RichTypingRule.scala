@@ -18,6 +18,6 @@ class RichTypingRule[TermType <: HasOrigin, TypeType](implicit val typeSystem: T
 
   def fromTypeEnvironment(term: HasOrigin, name: String)(implicit typeSystem: TypeSystem[TermType, TypeType]): Rule[TypeType] = typeSystem.typeEnvironment.get(name) match {
     case Some(tpe) => success(tpe)
-    case None => fail(term, "Could not find field")
+    case None => fail(term, s"Could not find field $name")
   }
 }

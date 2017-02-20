@@ -21,7 +21,7 @@ object EntityLangTypeSystem {
     "epic" -> (int ~>: string ~>: boolean ~>: int)
   )
 
-  implicit val typeSystem = TypeSystem(
+  val typeSystem = TypeSystem(
     if3,
     true0,
     false0,
@@ -37,7 +37,7 @@ object EntityLangTypeSystem {
 
   type Rule = TopLevelTypingRule[SExp, Type]
 
-  def if3: Rule = {
+  def if3: Rule = implicit typeSystem => {
     case If3(e1, e2, e3, _) =>
       for{
         t1 <- e1.infer.ofType(boolean)
@@ -45,27 +45,28 @@ object EntityLangTypeSystem {
       } yield t2
   }
 
-  def true0: Rule = {
+  def true0: Rule = implicit typeSystem => {
     case t @ True0(_) => success(boolean)
   }
 
-  def false0: Rule = {
+
+  def false0: Rule = implicit typeSystem => {
     case False0(_) => success(boolean)
   }
 
-  def int1: Rule = {
+  def int1: Rule = implicit typeSystem =>{
     case Int1(_, _) => success(int)
   }
 
-  def string1: Rule = {
+  def string1: Rule = implicit typeSystem => {
     case String1(_, _) => success(string)
   }
 
-  def float1: Rule = {
+  def float1: Rule = implicit typeSystem => {
     case Float1(_, _) => success(float)
   }
 
-  def unExp: Rule = {
+  def unExp: Rule = implicit typeSystem => {
     case UnExp(op, e1) =>
       op match {
         case Not =>
@@ -75,7 +76,7 @@ object EntityLangTypeSystem {
       }
   }
 
-  def binExp: Rule = {
+  def binExp: Rule = implicit typeSystem => {
     case term @ BinExp(op, e1, e2) => op match {
       case NumericOperator(_) =>
         for {
@@ -94,7 +95,6 @@ object EntityLangTypeSystem {
           t1 <- numeric(e1)
           t2 <- numeric(e2)
         } yield boolean
-
 
       case Equal =>
         for {
@@ -125,27 +125,27 @@ object EntityLangTypeSystem {
     }
   }
 
-  def apply2: Rule = {
-    case a @ Apply2(e1, args, _) =>
-      args.value.foldLeft[TermTypingRule[SExp, Type, Type]](e1.infer){
+  def apply2: Rule = implicit typeSystem => {
+    case a@Apply2(e1, args, _) =>
+      args.value.foldLeft[TermTypingRule[SExp, Type, Type]](e1.infer) {
         case (acc, current) =>
-          val x = for{
+          val x = for {
             f <- acc.ofType[FunctionType]("FunctionType")
             t1 <- current.infer
-            t2 <- if(t1 != f.t1) rule.mismatchedType(current, f.t1, t1) else rule.success(f.t2)
+            t2 <- if (t1 != f.t1) rule.mismatchedType(current, f.t1, t1) else rule.success(f.t2)
           } yield t2
           x.bindTerm(current)
       }
-  }
+    }
 
-  def ref1: Rule = {
+  def ref1: Rule = implicit typeSystem => {
     case r @ Ref1(id1, _) =>
       for {
         t1 <- rule.fromTypeEnvironment(r, id1.string)
       } yield t1
   }
 
-  def memberAccess2: Rule = {
+  def memberAccess2: Rule = implicit typeSystem => {
     case m @ MemberAccess2(e, id, _) =>
       for {
         EntityType(name) <- e.infer.ofType[EntityType]("Entity Type")

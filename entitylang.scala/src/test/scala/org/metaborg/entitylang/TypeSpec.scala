@@ -1,6 +1,6 @@
 package org.metaborg.entitylang
 
-import org.metaborg.entitylang.analysis.Analyzer
+import org.metaborg.entitylang.analysis.{AnalysisModel, Analyzer}
 import org.metaborg.entitylang.analysis.types._
 import org.metaborg.entitylang.analysis.types.typesystem.entitylang.EntityLangTypeSystem
 import org.metaborg.entitylang.analysis.types.typesystem.error.TypeError
@@ -36,6 +36,72 @@ class TypeSpec extends FlatSpec{
 
     scc.foreach(println)
   }
+
+  "Entities" should "typecheck with single entity" in {
+    val program =
+      """
+        |entity A {
+        |  a: Int
+        |  b: Int
+        |  c: Boolean
+        |  d = a + 1
+        |  e = if(c) a else b
+        |  f = !c
+        |}
+      """.stripMargin
+    val ast = EntityLangParserProvider.parser.parse(program)
+    val model = Analyzer.analyze(ast)
+    val fieldAssert = assertFieldType(model) _
+
+    fieldAssert("A", "a")(int)
+    fieldAssert("A", "b")(int)
+    fieldAssert("A", "c")(boolean)
+    fieldAssert("A", "d")(int)
+    fieldAssert("A", "e")(int)
+    fieldAssert("A", "f")(boolean)
+  }
+
+  it should "typecheck with multiple entities" in {
+    val program =
+      """
+        |entity A {
+        | a: Int
+        | b: Boolean
+        | c = if(right.a > 1) right.a else a
+        | d = if(right.b) right.a else a
+        |}
+        |
+        |entity B {
+        | a: Int
+        | b: Boolean
+        | c = if(left.b) 4 else a
+        | d = left.a + a > 4
+        |}
+        |
+        |relation A.left * <-> * B.right
+      """.stripMargin
+    val ast = EntityLangParserProvider.parser.parse(program)
+    val model = Analyzer.analyze(ast)
+    val fieldAssert = assertFieldType(model) _
+
+    fieldAssert("A", "a")(int)
+    fieldAssert("A", "b")(boolean)
+    fieldAssert("A", "c")(int)
+    fieldAssert("A", "d")(int)
+
+    fieldAssert("B", "a")(int)
+    fieldAssert("B", "b")(boolean)
+    fieldAssert("B", "c")(int)
+    fieldAssert("B", "d")(boolean)
+  }
+
+  def assertFieldType(model: AnalysisModel)(entity: String, field: String)(t: Type) = model.fields.collectFirst{
+    case (fieldNode, dataNode) if fieldNode.entity == entity && fieldNode.name == field => dataNode.fieldType
+  } match{
+    case Some(t2) => assertResult(t2)(t)
+    case None => fail(s"Field not found: $entity.$field")
+  }
+
 
   "Expressions" should "typecheck" in {
     assertType("if(true) false else true")(boolean)
