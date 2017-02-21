@@ -44,7 +44,7 @@ object ExpressionTypeSystem {
   def if3: Rule = implicit typeSystem => {
     case If3(e1, e2, e3, _) =>
       for{
-        t1 <- e1.infer.ofType(boolean.one)
+        t1 <- e1.infer.ofType(boolean.one)(typeSystem, ppType)
         t2 <- matching(e2, e3)
       } yield t2
   }

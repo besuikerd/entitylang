@@ -1,7 +1,7 @@
 entity Student{
   name: String
 
-  totalGrade = submissions.assignment.name + submissions.grade
+  totalGrade = sum(submissions.grade)
 }
 
 entity Assignment{
@@ -15,7 +15,7 @@ entity Submission{
   grade: Float?
   pass: Boolean = grade >= assignment.minimum && conj(childPass) <+ false
 
-  x = if(true) 5 else 4
+  x = if(true) 5 else 4.0
 
   childPass = children.pass
   average = avg(children.grade)
