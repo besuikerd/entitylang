@@ -1,7 +1,7 @@
 entity Student{
   name: String
 
-  compilation = submissions.assignment.name + submissions.grade
+  totalGrade = submissions.assignment.name + submissions.grade
 }
 
 entity Assignment{

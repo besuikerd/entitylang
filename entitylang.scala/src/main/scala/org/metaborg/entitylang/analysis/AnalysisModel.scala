@@ -20,6 +20,10 @@ case class AnalysisModel(
   def entityScope(entityName: String): Map[String, Type] =
     fields.values.filter(f => f.node.entity == entityName).map(f => f.node.name -> f.fieldType).toMap
 
+  def fieldType(entity: String, field: String): Option[Type] = fields.collectFirst{
+    case (k, v) if k.entity == entity && k.name == field => v.fieldType
+  }
+
   def reportError(message: String, origin: Origin): AnalysisModel = copy(errors = EditorMessage(message, origin) +: errors)
 }
 

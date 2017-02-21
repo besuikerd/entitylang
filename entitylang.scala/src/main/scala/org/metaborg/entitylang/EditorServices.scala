@@ -3,6 +3,7 @@ package org.metaborg.entitylang
 import org.metaborg.entitylang.analysis.Analyzer
 import org.metaborg.entitylang.graph.webservice.GraphWebService
 import org.metaborg.entitylang.graph.{Edge, Graph, Node}
+import org.metaborg.entitylang.lang.ast.MExpression.SExp
 import org.metaborg.entitylang.lang.ast.Mentitylang.SStart.Start1
 import org.metaborg.scalaterms.Origin
 import org.metaborg.scalaterms.spoofax._
@@ -11,7 +12,10 @@ import org.strategoxt.lang.Context
 object EditorServices extends EditorServices{
 
   override def editorHover(focusedStrategyInput: FocusedStrategyInput)(implicit context: Context): Option[HoverResult] =
-    Some(HoverResult(s"Hovering: ${focusedStrategyInput.node}"))
+    focusedStrategyInput.node match{
+      case e: SExp => Some(HoverResult(s"Hovering $e"))
+      case _ => None
+    }
 
   override def editorAnalyze(generalStrategyInput: GeneralStrategyInput)(implicit context: Context): AnalysisResult = {
 

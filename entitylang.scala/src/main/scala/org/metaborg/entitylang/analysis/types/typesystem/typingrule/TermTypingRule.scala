@@ -31,12 +31,12 @@ trait TermTypingRule[TermType0 <: HasOrigin, TypeType0, T0 <: TypeType0] extends
     r.bindTerm(term)
   }
 
-  def ofType[U <: T](t: U)(implicit typeSystemT: TypeSystemT): TermTypingRule[TermType0, TypeType0, U] = {
+  def ofType[U <: T](t: U)(implicit typeSystemT: TypeSystemT, ppType: T => String): TermTypingRule[TermType0, TypeType0, U] = {
     val r = flatMap[U]{ t2 =>
       if (t == t2) {
         rule.success[U](t)
       } else {
-        rule.fail[U](term, s"Expected type: $t, got: $t2")
+        rule.fail[U](term, s"Expected type: ${ppType(t)}, got: ${ppType(t2)}")
       }
     }
     r.bindTerm(term)

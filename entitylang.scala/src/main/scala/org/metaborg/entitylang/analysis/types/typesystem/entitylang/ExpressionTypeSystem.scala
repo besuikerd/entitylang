@@ -35,6 +35,10 @@ object ExpressionTypeSystem {
     memberAccess2
   ).withBindings(builtin)
 
+
+
+  implicit val ppType: (Type) => String = Type.ppType
+
   type Rule = TopLevelTypingRule[SExp, Type]
 
   def if3: Rule = implicit typeSystem => {

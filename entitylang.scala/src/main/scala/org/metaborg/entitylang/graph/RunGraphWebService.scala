@@ -55,7 +55,7 @@ object RunGraphWebService extends App{
     EntityLangParserProvider.parser.tryParseFile(path.toFile.getAbsolutePath) match{
       case Right(ast) => {
         val model = Analyzer.analyze(ast)
-        GraphWebService.pushGraph(model.graph)
+        GraphWebService.pushModel(model)
       }
       case Left(errors) => {
         println("parsing failed:")

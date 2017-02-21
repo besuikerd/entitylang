@@ -6,8 +6,11 @@ import akka.actor.ActorRef
 import akka.http.scaladsl.model.{ContentTypes, HttpEntity, HttpResponse}
 import akka.http.scaladsl.server.Route
 import akka.stream.scaladsl.{Sink, Source}
-import org.metaborg.entitylang.analysis.AnalysisGraph
+import org.metaborg.entitylang.analysis.types.Type
+import org.metaborg.entitylang.analysis.{AnalysisGraph, AnalysisModel}
+
 import scalax.collection.io.json._
+import scalax.collection.io.json.exp.Export
 
 trait GraphWebsocketHandler {
 
@@ -18,7 +21,15 @@ trait GraphWebsocketHandler {
 
     ctx.request.header[UpgradeToWebSocket] match{
       case Some(upgrade) => {
-        val source: Source[Message, ActorRef] = Source.actorPublisher[AnalysisGraph](GraphSourceActor.props(latestGraphActor)).map(g => TextMessage(g.toJson(AnalysisGraphDescriptor.descriptor)))
+        val source: Source[Message, ActorRef] = Source.actorPublisher[AnalysisModel](GraphSourceActor.props(latestGraphActor)).map { model =>
+
+          val export = new Export(model.graph, AnalysisGraphDescriptor.descriptor)
+          import net.liftweb.json._
+          val jsonAST = export.jsonAST(List(export.jsonASTNodes, export.jsonASTEdges, JField("types", JObject(
+            model.fields.map{case (k, v) => JField(s"${k.entity}.${k.name}", JString(Type.ppType(v.fieldType)))}.toList
+          ))))
+          TextMessage(compactRender(jsonAST))
+        }
         ctx.complete(upgrade.handleMessagesWithSinkSource(Sink.foreach(m => println(m)), source))
       }
       case None => {

@@ -180,5 +180,14 @@ class TypeSpec extends FlatSpec{
 
   def typeError(t: TypeError) = fail("type error @ " + t.errorString)
 
-  def assertType(exp: String)(t: Type) = inferType(exp).fold(typeError, t2 => if(t2 != t) fail(s"Expected type: $t, got: $t2"))
+  def assertType(exp: String)(t: Type) = {
+    import typesystem._
+    implicit val ts = ExpressionTypeSystem.typeSystem
+    implicit val pp: (Type) => String = Type.ppType
+    val r = for {
+      e <- parse(exp).left.map(e => "Parse error: " + e.mkString("\n")).right
+      u <- e.infer.ofType(t).run.left.map(e => "type error @ " + e.errorString).right
+    } yield u
+    r.fold[Unit](s => this.fail(s), e => {})
+  }
 }
