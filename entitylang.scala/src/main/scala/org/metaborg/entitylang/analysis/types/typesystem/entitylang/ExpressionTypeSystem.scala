@@ -9,7 +9,7 @@ import org.metaborg.entitylang.lang.ast.MExpression.SExp
 import org.metaborg.entitylang.lang.ast.MExpression.SExp.{Apply2, If3, MemberAccess2, Ref1}
 import org.metaborg.entitylang.lang.ast.MExpression.SLiteral._
 
-object EntityLangTypeSystem {
+object ExpressionTypeSystem {
   val builtin = Map(
     "min" -> (int ~>: int),
     "max" -> (int ~>: int),
@@ -40,30 +40,29 @@ object EntityLangTypeSystem {
   def if3: Rule = implicit typeSystem => {
     case If3(e1, e2, e3, _) =>
       for{
-        t1 <- e1.infer.ofType(boolean)
+        t1 <- e1.infer.ofType(boolean.one)
         t2 <- matching(e2, e3)
       } yield t2
   }
 
   def true0: Rule = implicit typeSystem => {
-    case t @ True0(_) => success(boolean)
+    case t @ True0(_) => rule.success(boolean.one)
   }
 
-
   def false0: Rule = implicit typeSystem => {
-    case False0(_) => success(boolean)
+    case False0(_) => rule.success(boolean.one)
   }
 
   def int1: Rule = implicit typeSystem =>{
-    case Int1(_, _) => success(int)
+    case Int1(_, _) => rule.success(int.one)
   }
 
   def string1: Rule = implicit typeSystem => {
-    case String1(_, _) => success(string)
+    case String1(_, _) => rule.success(string.one)
   }
 
   def float1: Rule = implicit typeSystem => {
-    case Float1(_, _) => success(float)
+    case Float1(_, _) => rule.success(float.one)
   }
 
   def unExp: Rule = implicit typeSystem => {
@@ -71,7 +70,7 @@ object EntityLangTypeSystem {
       op match {
         case Not =>
           for {
-            t1 <- e1.infer.ofType(boolean)
+            t1 <- e1.infer.ofType(boolean.one)
           } yield t1
       }
   }
@@ -86,38 +85,38 @@ object EntityLangTypeSystem {
 
       case Mod =>
         for{
-          t1 <- e1.infer.ofType(int)
-          t2 <- e2.infer.ofType(int)
-        } yield int
+          t1 <- e1.infer.ofType(int.one)
+          t2 <- e2.infer.ofType(int.one)
+        } yield int.one
 
       case CompareOperator(_) =>
         for{
           t1 <- numeric(e1)
           t2 <- numeric(e2)
-        } yield boolean
+        } yield boolean.one
 
       case Equal =>
         for {
           t1 <- e1.infer
           t2 <- e2.infer
-        } yield boolean
+        } yield boolean.one
 
       case Inequal =>
         for {
           t1 <- e1.infer
           t2 <- e2.infer
-        } yield boolean
+        } yield boolean.one
       case And =>
         for {
-          t1 <- e1.infer.ofType(boolean)
-          t2 <- e2.infer.ofType(boolean)
-        } yield boolean
+          t1 <- e1.infer.ofType(boolean.one)
+          t2 <- e2.infer.ofType(boolean.one)
+        } yield boolean.one
 
       case Or =>
         for {
-          t1 <- e1.infer.ofType(boolean)
-          t2 <- e2.infer.ofType(boolean)
-        } yield boolean
+          t1 <- e1.infer.ofType(boolean.one)
+          t2 <- e2.infer.ofType(boolean.one)
+        } yield boolean.one
 
       case _ => rule.fail(term, op + " not implemented yet")
 //      case Merge =>
@@ -148,7 +147,7 @@ object EntityLangTypeSystem {
   def memberAccess2: Rule = implicit typeSystem => {
     case m @ MemberAccess2(e, id, _) =>
       for {
-        EntityType(name) <- e.infer.ofType[EntityType]("Entity Type")
+        MultiplicityType(EntityType(name), _) <- entity(e)
         t2 <- rule.fromTypeEnvironment(id, s"$name.${id.string}")
       } yield t2
   }

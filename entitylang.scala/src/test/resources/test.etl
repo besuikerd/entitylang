@@ -15,6 +15,8 @@ entity Submission{
   grade: Float?
   pass: Boolean = grade >= assignment.minimum && conj(childPass) <+ false
 
+  x = if(true) 5 else 4
+
   childPass = children.pass
   average = avg(children.grade)
 
@@ -33,6 +35,11 @@ entity A{
   amount: Int
   weight: Float
   value: Float = children.value + amount * weight
+  
+  a = b
+  b = c
+  c = d
+  d = 2
 }
 
 relation A.parent 1 <-> * A.children

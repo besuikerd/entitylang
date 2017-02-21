@@ -1,7 +1,7 @@
 package org.metaborg.entitylang.analysis
 
 import org.metaborg.entitylang.analysis.types._
-import org.metaborg.entitylang.analysis.types.typesystem.entitylang.EntityLangTypeSystem
+import org.metaborg.entitylang.analysis.types.typesystem.entitylang.{ExpressionTypeSystem, MultiplicityTypeSystem, OptionalTypeTypeSystem, PrimitiveTypeWithMultiplicityTypeSystem}
 import org.metaborg.entitylang.analysis.types.typesystem.error.TypeError
 import org.metaborg.entitylang.desugar._
 import org.metaborg.entitylang.lang.ast.MExpression.SExp
@@ -12,6 +12,7 @@ import org.metaborg.entitylang.lang.ast.MModel.SEntityRef.EntityRef1
 import org.metaborg.entitylang.lang.ast.MModel.SModel.{Entity2, Relation6}
 import org.metaborg.entitylang.lang.ast.Mentitylang.SStart.Start1
 import org.metaborg.entitylang.util.seqExtensions
+
 import scalax.collection.GraphPredef._
 
 object Analyzer {
@@ -32,14 +33,16 @@ object Analyzer {
           model.foldWith(member2.value)(model => {
             case attribute@Attribute2(name, tpe, origin) =>
               val entityFieldNode = AttributeNode(entityNode.name, name.string)
-              val entityFieldData = AttributeNodeData(Type.apply(tpe), entityFieldNode, attribute)
+              val inferredType = PrimitiveTypeWithMultiplicityTypeSystem.infer(tpe).right.getOrElse(top)
+              val entityFieldData = AttributeNodeData(inferredType, entityFieldNode, attribute)
               model.copy(
                 fields = model.fields + (entityFieldNode -> entityFieldData),
                 graph = model.graph + (entityNode ~> entityFieldNode)
               )
             case derivedValue@DerivedAttribute3(name, tpe, e, origin) =>
               val entityFieldNode = DerivedValueNode(entityNode.name, name.string)
-              val entityFieldNodeData = DerivedValueNodeData(Type.apply(tpe), entityFieldNode, derivedValue)
+              val inferredType = OptionalTypeTypeSystem.infer(tpe).right.getOrElse(top)
+              val entityFieldNodeData = DerivedValueNodeData(inferredType, entityFieldNode, derivedValue)
               model.copy(
                 fields = model.fields + (entityFieldNode -> entityFieldNodeData),
                 graph = model.graph + (entityNode ~> entityFieldNode)
@@ -49,11 +52,13 @@ object Analyzer {
         case relation@Relation6(entityRefLeft: EntityRef1, attributeRefLeft: AttributeRef1, multiplicityLeft, multiplicityRight, entityRefRight: EntityRef1, attributeRefRight: AttributeRef1, _) =>
           val entityNodeLeft = EntityNode(entityRefLeft.id1.string)
           val relationNodeLeft = RelationNode(entityNodeLeft.name, attributeRefLeft.id1.string)
-          val relationNodeDataLeft = RelationNodeData(EntityType(entityRefRight.id1.string), entityRefLeft, attributeRefLeft, multiplicityLeft, relationNodeLeft, relation)
+          val leftType = MultiplicityTypeSystem.infer(multiplicityLeft).right.map(m => MultiplicityType(EntityType(entityRefRight.id1.string), m)).right.get
+          val relationNodeDataLeft = RelationNodeData(leftType, entityRefLeft, attributeRefLeft, multiplicityLeft, relationNodeLeft, relation)
 
           val entityNodeRight = EntityNode(entityRefRight.id1.string)
           val relationNodeRight = RelationNode(entityNodeRight.name, attributeRefRight.id1.string)
-          val relationNodeDataRight = RelationNodeData(EntityType(entityRefLeft.id1.string), entityRefRight, attributeRefRight, multiplicityRight, relationNodeRight, relation)
+          val rightType = MultiplicityTypeSystem.infer(multiplicityRight).right.map(m => MultiplicityType(EntityType(entityRefLeft.id1.string), m)).right.get
+          val relationNodeDataRight = RelationNodeData(rightType, entityRefRight, attributeRefRight, multiplicityRight, relationNodeRight, relation)
 
           model.copy(
             fields = model.fields
@@ -73,7 +78,7 @@ object Analyzer {
         entityField <- model.graph.findEntityField(entityNode.name, field)
         entityFieldData <- model.fields.get(entityField.typedValue[EntityFieldNode])
         targetEntity <- Some(entityFieldData.fieldType match {
-          case EntityType(t) => t
+          case MultiplicityType(EntityType(t), _) => t
           case _ => entityNode.name
         })
       } yield (EntityNode(targetEntity), entityField)
@@ -151,7 +156,7 @@ object Analyzer {
         val scope = model.entityScope(node.entity) ++ model.fields.map{
           case (field, data) => s"${field.entity}.${field.name}" -> data.fieldType
         }
-        val typeSystem = EntityLangTypeSystem.typeSystem.withBindings(scope)
+        val typeSystem = ExpressionTypeSystem.typeSystem.withBindings(scope)
         val inferred = typeSystem.infer(term.exp3)
         inferred match {
           case Left(TypeError(origin, message)) =>

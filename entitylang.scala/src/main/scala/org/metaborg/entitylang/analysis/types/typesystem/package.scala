@@ -8,7 +8,7 @@ package object typesystem {
 
   def matching[TermType <: HasOrigin, TypeType](terms: TermType*)(implicit typeSystem: TypeSystem[TermType, TypeType]): TypingRule.Aux[TermType, TypeType, TypeType] = new MatchingTypingRule[TermType, TypeType](terms:_*)
 
-  def success[TermType <: HasOrigin, TypeType, T <: TypeType](t: T)(implicit typeSystem: TypeSystem[TermType, TypeType]) = new SuccessTypingRule[TermType, TypeType, T](t)
+  def success[TermType <: HasOrigin, TypeType, T <: TypeType](t: T)(implicit typeSystem: TypeSystem[TermType, TypeType]) = new ResultTypingRule[TermType, TypeType, T](Right(t))
   def fail[TermType <: HasOrigin, TypeType, Term <: TermType](term: HasOrigin, message: String)(implicit typeSystem: TypeSystem[TermType, TypeType]) = new FailTypingRule[TermType, TypeType, TypeType](term, message)
 
   def rule[TermType <: HasOrigin, TypeType](implicit typeSystem: TypeSystem[TermType, TypeType]) = new RichTypingRule[TermType, TypeType]

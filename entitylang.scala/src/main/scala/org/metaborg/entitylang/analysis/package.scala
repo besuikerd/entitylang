@@ -49,5 +49,5 @@ package object analysis {
   case class AttributeNodeData(fieldType : Type, node: EntityFieldNode, term: Attribute2) extends EntityFieldNodeData.Aux[Attribute2]
 
   case class RelationNode(entity: String, name: String) extends EntityFieldNode
-  case class RelationNodeData(fieldType: EntityType, entityRef: EntityRef1, attributeRef: AttributeRef1, multiplicity: SMultiplicity, node: EntityFieldNode, term: Relation6) extends EntityFieldNodeData.Aux[Relation6]
+  case class RelationNodeData(fieldType: MultiplicityType[EntityType], entityRef: EntityRef1, attributeRef: AttributeRef1, multiplicity: SMultiplicity, node: EntityFieldNode, term: Relation6) extends EntityFieldNodeData.Aux[Relation6]
 }

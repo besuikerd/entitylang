@@ -2,7 +2,8 @@ package org.metaborg.entitylang
 
 import org.metaborg.entitylang.analysis.{AnalysisModel, Analyzer}
 import org.metaborg.entitylang.analysis.types._
-import org.metaborg.entitylang.analysis.types.typesystem.entitylang.EntityLangTypeSystem
+import org.metaborg.entitylang.analysis.types.multiplicity.{ExactlyOne, MultiplicityBounds}
+import org.metaborg.entitylang.analysis.types.typesystem.entitylang.ExpressionTypeSystem
 import org.metaborg.entitylang.analysis.types.typesystem.error.TypeError
 import org.metaborg.entitylang.lang.ast.MExpression.SExp
 import org.metaborg.entitylang.lang.ast.MExpression.SExp.If3
@@ -59,12 +60,12 @@ class TypeSpec extends FlatSpec{
     val model = Analyzer.analyze(ast)
     val fieldAssert = assertFieldType(model) _
 
-    fieldAssert("A", "a")(int)
-    fieldAssert("A", "b")(int)
-    fieldAssert("A", "c")(boolean)
-    fieldAssert("A", "d")(int)
-    fieldAssert("A", "e")(int)
-    fieldAssert("A", "f")(boolean)
+    fieldAssert("A", "a")(int.one)
+    fieldAssert("A", "b")(int.one)
+    fieldAssert("A", "c")(boolean.one)
+    fieldAssert("A", "d")(int.one)
+    fieldAssert("A", "e")(int.one)
+    fieldAssert("A", "f")(boolean.one)
   }
 
   it should "typecheck with multiple entities" in {
@@ -88,15 +89,15 @@ class TypeSpec extends FlatSpec{
       """.stripMargin
     val fieldAssert = createFieldAssert(program)
 
-    fieldAssert("A", "a")(int)
-    fieldAssert("A", "b")(boolean)
-    fieldAssert("A", "c")(int)
-    fieldAssert("A", "d")(int)
+    fieldAssert("A", "a")(int.one)
+    fieldAssert("A", "b")(boolean.one)
+    fieldAssert("A", "c")(int.one)
+    fieldAssert("A", "d")(int.one)
 
-    fieldAssert("B", "a")(int)
-    fieldAssert("B", "b")(boolean)
-    fieldAssert("B", "c")(int)
-    fieldAssert("B", "d")(boolean)
+    fieldAssert("B", "a")(int.one)
+    fieldAssert("B", "b")(boolean.one)
+    fieldAssert("B", "c")(int.one)
+    fieldAssert("B", "d")(boolean.one)
   }
 
   it should "typecheck cyclic dependencies" in {
@@ -111,9 +112,9 @@ class TypeSpec extends FlatSpec{
         |relation A.parent 1 <-> * A.children
       """.stripMargin
     val fieldAssert = createFieldAssert(program)
-    fieldAssert("A", "amount")(int)
-    fieldAssert("A", "weight")(float)
-    fieldAssert("A", "value")(float)
+    fieldAssert("A", "amount")(int.one)
+    fieldAssert("A", "weight")(float.one)
+    fieldAssert("A", "value")(float.one)
   }
 
   def createFieldAssert(program: String): (String, String) => (Type) => Assertion = {
@@ -128,41 +129,42 @@ class TypeSpec extends FlatSpec{
   def assertFieldType(model: AnalysisModel)(entity: String, field: String)(t: Type) = model.fields.collectFirst{
     case (fieldNode, dataNode) if fieldNode.entity == entity && fieldNode.name == field => dataNode.fieldType
   } match{
-    case Some(t2) => assertResult(t)(t2)
+    case Some(t2) =>
+      assertResult(t)(t2)
     case None => fail(s"Field not found: $entity.$field")
   }
 
 
   "Expressions" should "typecheck" in {
-    assertType("if(true) false else true")(boolean)
+    assertType("if(true) false else true")(boolean.one)
     illTyped("if(true) 3 else false")
 
-    assertType("!true")(boolean)
-    assertType("!false")(boolean)
+    assertType("!true")(boolean.one)
+    assertType("!false")(boolean.one)
 
-    assertType("1 + 2")(int)
-    assertType("1.0 + 2.0")(float)
-    assertType("1 + 1.0")(float)
-    assertType("1.0 + 1")(float)
+    assertType("1 + 2")(int.one)
+    assertType("1.0 + 2.0")(float.one)
+    assertType("1 + 1.0")(float.one)
+    assertType("1.0 + 1")(float.one)
     illTyped("1 + true")
     illTyped("true + 1")
 
 
-    assertType("5 > 4")(boolean)
+    assertType("5 > 4")(boolean.one)
     illTyped("true > false")
 
-    assertType("max(2)")(int)
+    assertType("max(2)")(int.one)
     illTyped("f(true)")
 
     assertType("""epic(2)""")(string ~>: boolean ~>: int)
     assertType("""epic(2 "epic")""")(boolean ~>: int)
-    assertType("""epic(2 "epic" true)""")(int)
+    assertType("""epic(2 "epic" true)""")(int.one)
     illTyped("""epic(2 "epic" true 4)""")
 
   }
 
   def inferType(exp: SExp): Either[TypeError, Type] =
-    EntityLangTypeSystem.typeSystem.infer(exp)
+    ExpressionTypeSystem.typeSystem.infer(exp)
 
   def parseError(cause: SpoofaxParser.Error) = fail("Parse error: " + cause)
 
