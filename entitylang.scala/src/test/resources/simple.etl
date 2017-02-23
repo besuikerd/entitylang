@@ -1,19 +1,23 @@
 entity A{
   amount: Int
   weight: Float
-  value: Float = sum(children.value) + amount * weight
+  value: Float = sum(childAmount) + amount * weight
 
-  childAmount = children.amount + x
+  childAmount = children.amount
 
   x: Int
   y: Int+
-  z = x + y
+  z = sum(y) + x
+
+  f: Boolean
+  childF = children.f
+  g = conj(childF)
 
 
   a = b
   b = c
   c = d
-  d = 2
+  d: Int+
 }
 
 relation A.parent 1 <-> + A.children

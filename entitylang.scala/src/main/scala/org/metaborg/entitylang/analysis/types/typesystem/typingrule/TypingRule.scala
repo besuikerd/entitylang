@@ -23,7 +23,6 @@ trait TypingRule {
   def run(implicit typeSystem: TypeSystemT): TypingResult
 
   def bindTerm(t: HasOrigin): TermTypingRule[TermType, TypeType, T] = new TermTypingRuleWrapper(this, t)
-
   def filter(f: T => Boolean)(implicit typeSystem: TypeSystemT): Rule[T] = new FilteredTypingRule[TermType, TypeType, T](this, f)
   def map[U](f: T => U)(implicit typeSystem: TypeSystemT): Rule[U] = new MappedTypingRule[TermType, TypeType, T, U](this, f)
   def flatMap[U](f: T => Rule[U])(implicit typeSystem: TypeSystemT): Rule[U] = new FlatMappedTypingRule[TermType, TypeType, T, U](this, f)

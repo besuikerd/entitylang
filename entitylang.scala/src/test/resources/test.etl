@@ -4,7 +4,9 @@ entity Student{
   averageGrade = avg(grades)
   grades = submissions.grade
   
-  x = "bla" + true
+  x: Int+
+  y: Int+
+  z = x + y
 }
 
 entity Assignment{

@@ -5,6 +5,7 @@ import org.metaborg.entitylang.analysis.types.typesystem._
 import org.metaborg.entitylang.analysis.types.typesystem.typingrule.{TermTypingRule, TypingRule}
 import org.metaborg.entitylang.analysis.types.{BaseType, EntityType, MultiplicityType, NumericType, Type}
 import org.metaborg.entitylang.lang.ast.MExpression.SExp
+import org.metaborg.scalaterms.HasOrigin
 
 import scala.reflect.{ClassTag, classTag}
 
@@ -28,12 +29,10 @@ package object typingrule {
     multiplicityType[NumericType](e, "Number")
 
   def numeric(e: SExp, upperBound: MultiplicityBounds)(implicit typeSystem: TypeSystem[SExp, Type]): TermTypingRule[SExp, Type, MultiplicityType[NumericType]] =
-    numeric(e).flatMap{ case mt @ MultiplicityType(t, m) =>
-      if(m <= upperBound)
-        rule.success(mt)
-      else
-        rule.fail[MultiplicityType[NumericType]](e, s"invalid bounds, expected at most $upperBound")
-    }.bindTerm(e)
+    numeric(e).flatMap{t => upperBounded(e, t, upperBound)}
+
+  def upperBounded[T <: BaseType](origin: HasOrigin, t: MultiplicityType[T], upperBound: MultiplicityBounds)(implicit typeSystem: TypeSystem[SExp, Type]): TermTypingRule[SExp, Type, MultiplicityType[T]] =
+    rule.success(origin, t).filter(_.multiplicity <= upperBound, t => s"invalid bounds, expected at most $upperBound, got ${t.multiplicity}")
 
   def entity(e: SExp)(implicit typeSystem: TypeSystem[SExp, Type]): TermTypingRule[SExp, Type, MultiplicityType[EntityType]] =
     multiplicityType[EntityType](e, "Entity")

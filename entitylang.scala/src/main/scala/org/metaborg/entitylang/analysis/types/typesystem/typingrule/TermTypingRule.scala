@@ -12,8 +12,15 @@ trait TermTypingRule[TermType0 <: HasOrigin, TypeType0, T0] extends TypingRule{
 
   val term: HasOrigin
 
-  override def flatMap[U](f: (T0) => Rule[U])(implicit typeSystem: TypeSystemT): Rule[U] = super.flatMap(f)
+  override def flatMap[U](f: (T0) => Rule[U])(implicit typeSystem: TypeSystemT): TermTypingRule[TermType, TypeType, U] =
+    super.flatMap(f).bindTerm(term)
 
+  def filter(f: T => Boolean, message: T => String)(implicit typeSystem: TypeSystemT): TermTypingRule[TermType, TypeType, T] = filter(f).flatMap[T]{ t =>
+    if(f(t))
+      rule.success(t)
+    else
+      rule.fail(term, message(t))
+  }.bindTerm(term)
 
   def fail(message: String)(implicit typeSystem: TypeSystemT): TermTypingRule[TermType0, TypeType0, T] =
     rule.fail(term, message).bindTerm(term)

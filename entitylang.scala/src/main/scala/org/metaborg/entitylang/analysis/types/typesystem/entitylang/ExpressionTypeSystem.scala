@@ -10,17 +10,42 @@ import org.metaborg.entitylang.desugar._
 import org.metaborg.entitylang.lang.ast.MExpression.SExp
 import org.metaborg.entitylang.lang.ast.MExpression.SExp.{Apply2, If3, MemberAccess2, Ref1}
 import org.metaborg.entitylang.lang.ast.MExpression.SLiteral._
+import org.metaborg.scalaterms.HasOrigin
 
 object ExpressionTypeSystem {
-  val builtin = Map(
-    "min" -> (int ~>: int),
-    "max" -> (int ~>: int),
-    "avg" -> (int ~>: int),
-    "sum" -> (int ~>: int),
-    "conj" -> (boolean ~>: boolean),
-    "disj" -> (boolean ~>: boolean),
+//  val builtin = Map(
+//    "min" -> (int ~>: int),
+//    "max" -> (int ~>: int),
+//    "avg" -> (int ~>: int),
+//    "sum" -> (int ~>: int),
+//    "conj" -> (boolean ~>: boolean),
+//    "disj" -> (boolean ~>: boolean),
+//  )
 
-    "epic" -> (int ~>: string ~>: boolean ~>: int)
+  type FunctionN = TypeSystem[SExp, Type] => HasOrigin => Seq[SExp] => TypingRule.Aux[SExp, Type, Type]
+  type Function1 = TypeSystem[SExp, Type] => SExp => TypingRule.Aux[SExp, Type, Type]
+
+  def function1(inner: Function1): FunctionN = implicit typeSystem => origin => expressions =>
+    if(expressions.isEmpty)
+      rule.fail(origin, "Expected at least 1 argument")
+    else
+      inner(typeSystem)(expressions.head)
+
+  val manyNumToNum: Function1 = implicit typeSystem => e1 => for{
+    t1 <- numeric(e1, zeroToMany)
+  } yield t1.baseType.one
+
+  val manyBoolToBool: Function1 = implicit typeSystem => e1 => for{
+    t1 <- multiplicityType[BooleanType](e1).flatMap{t => upperBounded(e1, t, zeroToMany)}
+  } yield boolean.one
+
+  val functions: Map[String, FunctionN] = Map(
+    "min" -> function1(manyNumToNum),
+    "max" -> function1(manyNumToNum),
+    "avg" -> function1(manyNumToNum),
+    "sum" -> function1(manyNumToNum),
+    "conj" -> function1(manyBoolToBool),
+    "disj" -> function1(manyBoolToBool)
   )
 
   val typeSystem = TypeSystem(
@@ -35,7 +60,7 @@ object ExpressionTypeSystem {
     apply2,
     ref1,
     memberAccess2
-  ).withBindings(builtin)
+  )
 
 
 
@@ -134,17 +159,28 @@ object ExpressionTypeSystem {
   }
 
   def apply2: Rule = implicit typeSystem => {
-    case a@Apply2(e1, args, _) =>
-      args.value.foldLeft[TermTypingRule[SExp, Type, Type]](e1.infer) {
-        case (acc, current) =>
-          val x = for {
-            f <- acc.ofType[FunctionType]("FunctionType")
-            t1 <- current.infer
-            t2 <- if (t1 != f.t1) rule.mismatchedType(current, f.t1, t1) else rule.success(f.t2)
-          } yield t2
-          x.bindTerm(current)
+    case a @ Apply2(e1, args, _) =>
+      e1 match{
+        case Ref1(id, _) => functions.get(id.string) match{
+          case Some(f) => f.apply(typeSystem)(e1)(args.value)
+          case None => rule.fail(e1, "function not found: " + id.string)
+        }
+        case _ => rule.fail(e1, "expected an identifier")
       }
-    }
+  }
+
+//  def apply2: Rule = implicit typeSystem => {
+//    case a@Apply2(e1, args, _) =>
+//      args.value.foldLeft[TermTypingRule[SExp, Type, Type]](e1.infer) {
+//        case (acc, current) =>
+//          val x = for {
+//            f <- acc.ofType[FunctionType]("FunctionType")
+//            t1 <- current.infer
+//            t2 <- if (t1 != f.t1) rule.mismatchedType(current, f.t1, t1) else rule.success(f.t2)
+//          } yield t2
+//          x.bindTerm(current)
+//      }
+//    }
 
   def ref1: Rule = implicit typeSystem => {
     case r @ Ref1(id1, _) =>

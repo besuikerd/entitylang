@@ -14,6 +14,18 @@ case class LongType() extends NumericType
 case class IntType() extends NumericType
 case class FloatType() extends NumericType
 
+object NumericType{
+  implicit val numericOrdering: Ordering[NumericType] = new Ordering[NumericType]{
+    override def compare(x: NumericType, y: NumericType): Int = orderNum(x) - orderNum(y)
+
+    def orderNum(t: NumericType) = t match {
+      case IntType() => 0
+      case LongType() => 1
+      case FloatType() => 2
+    }
+  }
+}
+
 case class EntityType(name: String) extends BaseType
 
 case class MultiplicityType[T <: BaseType](baseType: T, multiplicity: MultiplicityBounds) extends Type
