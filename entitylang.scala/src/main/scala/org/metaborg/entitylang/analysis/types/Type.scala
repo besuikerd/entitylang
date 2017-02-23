@@ -28,7 +28,7 @@ object NumericType{
 
 case class EntityType(name: String) extends BaseType
 
-case class MultiplicityType[T <: BaseType](baseType: T, multiplicity: MultiplicityBounds) extends Type
+case class MultiplicityType[+T <: BaseType](baseType: T, multiplicity: MultiplicityBounds) extends Type
 
 case class TopType() extends Type
 case class FunctionType(t1: Type, t2: Type) extends Type

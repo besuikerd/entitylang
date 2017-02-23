@@ -13,8 +13,5 @@ package object typesystem {
 
   def rule[TermType <: HasOrigin, TypeType](implicit typeSystem: TypeSystem[TermType, TypeType]) = new RichTypingRule[TermType, TypeType]
 
-  def lub[T](t1: T, t2: T)(implicit ev: Ordering[T]): T =
-    if(ev.gt(t1, t2)) t1 else t2
-
   @inline implicit def enrichedTermTypingRule[TermType <: HasOrigin, TypeType, Term <: TermType](term: Term)(implicit typeSystem: TypeSystem[TermType, TypeType]) = new EnrichedTermTypingRule[TermType, TypeType, Term](term)
 }

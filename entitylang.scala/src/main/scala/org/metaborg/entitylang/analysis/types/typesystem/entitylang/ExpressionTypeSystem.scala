@@ -1,11 +1,10 @@
 package org.metaborg.entitylang.analysis.types.typesystem.entitylang
 
 import org.metaborg.entitylang.analysis.types._
-import org.metaborg.entitylang.analysis.types.multiplicity.Multiplicity
-import org.metaborg.entitylang.analysis.types.typesystem._
 import org.metaborg.entitylang.analysis.types.multiplicity._
+import org.metaborg.entitylang.analysis.types.typesystem._
 import org.metaborg.entitylang.analysis.types.typesystem.entitylang.typingrule._
-import org.metaborg.entitylang.analysis.types.typesystem.typingrule.{TermTypingRule, TypingRule}
+import org.metaborg.entitylang.analysis.types.typesystem.typingrule.TypingRule
 import org.metaborg.entitylang.desugar._
 import org.metaborg.entitylang.lang.ast.MExpression.SExp
 import org.metaborg.entitylang.lang.ast.MExpression.SExp.{Apply2, If3, MemberAccess2, Ref1}
@@ -32,7 +31,7 @@ object ExpressionTypeSystem {
       inner(typeSystem)(expressions.head)
 
   val manyNumToNum: Function1 = implicit typeSystem => e1 => for{
-    t1 <- numeric(e1, zeroToMany)
+    t1 <- boundedNumeric(e1, zeroToMany)
   } yield t1.baseType.one
 
   val manyBoolToBool: Function1 = implicit typeSystem => e1 => for{
@@ -110,51 +109,80 @@ object ExpressionTypeSystem {
     case term @ BinExp(op, e1, e2) => op match {
       case NumericOperator(_) =>
         for {
-          (MultiplicityType(t1, m1), MultiplicityType(t2, m2)) <-
+          (t1, t2) <-
             rule.all(
-              numeric(e1, zeroToOne),
-              numeric(e2, zeroToOne)
+              boundedNumeric(e1, zeroToOne),
+              boundedNumeric(e2, zeroToOne)
             )
-        } yield MultiplicityType(lub(t1, t2), if(m1 > m2) m1 else m2)
+            t3 <- lub(e2, t1, t2)
+        } yield t3
 
       case Mod =>
         for{
-          t1 <- e1.infer.ofType(int.one)
-          t2 <- e2.infer.ofType(int.one)
-        } yield int.one
+          (t1, t2) <- rule.all(
+            boundedMultiplicityType[IntType](e1, zeroToOne),
+            boundedMultiplicityType[IntType](e2, zeroToOne)
+          )
+          m <- lubMultiplicity(e2, t1.multiplicity, t2.multiplicity)
+        } yield int withMultiplicity m
 
       case CompareOperator(_) =>
         for{
-          t1 <- numeric(e1)
-          t2 <- numeric(e2)
-        } yield boolean.one
+          (t1, t2) <- rule.all(
+            boundedNumeric(e1, zeroToOne),
+            boundedNumeric(e2, zeroToOne)
+          )
+          m <- lubMultiplicity(e2, t1.multiplicity, t2.multiplicity)
+        } yield boolean withMultiplicity m
 
       case Equal =>
-        for {
-          t1 <- e1.infer
-          t2 <- e2.infer
-        } yield boolean.one
+        for{
+          (t1, t2) <- rule.all(
+            boundedMultiplicityType[BaseType](e1, zeroToOne),
+            boundedMultiplicityType[BaseType](e2, zeroToOne)
+          )
+          t3 <- lub(e2, t1, t2)
+        } yield boolean withMultiplicity t3.multiplicity
 
       case Inequal =>
-        for {
-          t1 <- e1.infer
-          t2 <- e2.infer
-        } yield boolean.one
+        for{
+          (t1, t2) <- rule.all(
+            boundedMultiplicityType[BaseType](e1, zeroToOne),
+            boundedMultiplicityType[BaseType](e2, zeroToOne)
+          )
+          t3 <- lub(e2, t1, t2)
+        } yield boolean withMultiplicity t3.multiplicity
+
       case And =>
-        for {
-          t1 <- e1.infer.ofType(boolean.one)
-          t2 <- e2.infer.ofType(boolean.one)
-        } yield boolean.one
+        for{
+          (t1, t2) <- rule.all(
+            boundedMultiplicityType[BooleanType](e1, zeroToOne),
+            boundedMultiplicityType[BooleanType](e2, zeroToOne)
+          )
+          t3 <- lub(e2, t1, t2)
+        } yield t3
 
       case Or =>
-        for {
-          t1 <- e1.infer.ofType(boolean.one)
-          t2 <- e2.infer.ofType(boolean.one)
-        } yield boolean.one
+        for{
+          (t1, t2) <- rule.all(
+            boundedMultiplicityType[BooleanType](e1, zeroToOne),
+            boundedMultiplicityType[BooleanType](e2, zeroToOne)
+          )
+          t3 <- lub(e2, t1, t2)
+        } yield t3
 
+      case ChoiceLeft =>
+      for {
+        (t1, t2) <-
+          rule.all(
+            maybeEmpty(e1),
+            multiplicityType[BaseType](e2)
+          )
+        t3 <- lub(e2, t1, t2)
+      } yield t2
+
+      //      case Merge =>
       case _ => rule.fail(term, op + " not implemented yet")
-//      case Merge =>
-//      case ChoiceLeft =>
     }
   }
 

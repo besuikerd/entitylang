@@ -13,6 +13,8 @@ class RichBaseType[T <: BaseType](val t: T) extends AnyVal {
 
   def zero: MultiplicityType[T] = MultiplicityType(t, zeroToZero)
 
+  def withMultiplicity(m: MultiplicityBounds) = MultiplicityType(t, m)
+
   def ~>:(t2: BaseType): FunctionType = FunctionType(t2.one, t.one)
   def ~>:(t2: Type): FunctionType = FunctionType(t2, t.one)
 }

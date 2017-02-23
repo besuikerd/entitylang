@@ -7,5 +7,5 @@ class FilteredTypingRule[TermType0 <: HasOrigin, TypeType0, T0](rule: TypingRule
   override type TypeType = TypeType0
   override type T = T0
   override def run(implicit typeSystem: TypeSystemT): TypingResult =
-    rule.run.right.flatMap{ t => if(f(t)) Right(t) else typeError(null, "Match failed on term")}
+    rule.run.right.flatMap{ t => if(f(t)) Right(t) else internalError("Match failed on term")}
 }
