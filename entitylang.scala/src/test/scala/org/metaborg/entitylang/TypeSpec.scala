@@ -5,6 +5,7 @@ import org.metaborg.entitylang.analysis.types._
 import org.metaborg.entitylang.analysis.types.multiplicity.{ExactlyOne, MultiplicityBounds}
 import org.metaborg.entitylang.analysis.types.typesystem.entitylang.ExpressionTypeSystem
 import org.metaborg.entitylang.analysis.types.typesystem.error.TypeError
+import org.metaborg.entitylang.analysis.types.typesystem.typingrule.TypingRule
 import org.metaborg.entitylang.lang.ast.MExpression.SExp
 import org.metaborg.entitylang.lang.ast.MExpression.SExp.If3
 import org.metaborg.entitylang.parser.{EntityLangParserProvider, SpoofaxParser}
@@ -136,6 +137,9 @@ class TypeSpec extends FlatSpec{
 
 
   "Expressions" should "typecheck" in {
+
+    println(inferType("true + false"))
+
     assertType("if(true) false else true")(boolean.one)
     illTyped("if(true) 3 else false")
 
@@ -163,17 +167,17 @@ class TypeSpec extends FlatSpec{
 
   }
 
-  def inferType(exp: SExp): Either[TypeError, Type] =
+  def inferType(exp: SExp): TypingRule.Aux[SExp, Type, Type]#TypingResult =
     ExpressionTypeSystem.typeSystem.infer(exp)
 
   def parseError(cause: SpoofaxParser.Error) = fail("Parse error: " + cause)
 
   def parse(exp: String): Either[SpoofaxParser.Error, SExp] = EntityLangParserProvider.expParser.tryParse(exp)
 
-  def inferType(exp: String): Either[TypeError, Type] = parse(exp).fold(parseError, inferType)
+  def inferType(exp: String): TypingRule.Aux[SExp, Type, Type]#TypingResult = parse(exp).fold(parseError, inferType)
 
   def wellTyped(exp: String) =
-    inferType(exp).left.foreach(typeError)
+    inferType(exp).left.foreach(_.foreach(typeError))
 
   def illTyped(exp: String) =
     inferType(exp).right.foreach(t => fail(s"SExp is well typed: $t"))
@@ -186,7 +190,7 @@ class TypeSpec extends FlatSpec{
     implicit val pp: (Type) => String = Type.ppType
     val r = for {
       e <- parse(exp).left.map(e => "Parse error: " + e.mkString("\n")).right
-      u <- e.infer.ofType(t).run.left.map(e => "type error @ " + e.errorString).right
+      u <- e.infer.ofType(t).run.left.map(e => "type errors @ " + e.map(_.errorString).mkString(", ")).right
     } yield u
     r.fold[Unit](s => this.fail(s), e => {})
   }

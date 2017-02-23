@@ -1,7 +1,10 @@
 entity Student{
   name: String
 
-  totalGrade = sum(submissions.grade)
+  averageGrade = avg(grades)
+  grades = submissions.grade
+  
+  x = "bla" + true
 }
 
 entity Assignment{
@@ -9,6 +12,7 @@ entity Assignment{
   minimum: Float?
 
   p = submissions.q
+  
 }
 
 entity Submission{

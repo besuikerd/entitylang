@@ -83,8 +83,7 @@ object ExpressionTypeSystem {
     case term @ BinExp(op, e1, e2) => op match {
       case NumericOperator(_) =>
         for {
-          t1 <- numeric(e1)
-          t2 <- numeric(e2)
+          (t1, t2) <- rule.all(numeric(e1), numeric(e2))
         } yield lub(t1, t2)
 
       case Mod =>
@@ -151,7 +150,7 @@ object ExpressionTypeSystem {
   def memberAccess2: Rule = implicit typeSystem => {
     case m @ MemberAccess2(e, id, _) =>
       for {
-        MultiplicityType(EntityType(name), _) <- entity(e)
+        MultiplicityType(EntityType(name), multiplicity) <- entity(e)
         t2 <- rule.fromTypeEnvironment(id, s"$name.${id.string}")
       } yield t2
   }

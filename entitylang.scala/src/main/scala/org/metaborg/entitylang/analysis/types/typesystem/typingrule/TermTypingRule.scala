@@ -5,14 +5,14 @@ import org.metaborg.scalaterms.HasOrigin
 
 import scala.reflect.{ClassTag, classTag}
 
-trait TermTypingRule[TermType0 <: HasOrigin, TypeType0, T0 <: TypeType0] extends TypingRule{
+trait TermTypingRule[TermType0 <: HasOrigin, TypeType0, T0] extends TypingRule{
   override type TermType = TermType0
   override type TypeType = TypeType0
   override type T = T0
 
-  val term: TermType0
+  val term: HasOrigin
 
-  override def flatMap[U <: TypeType0](f: (T0) => Rule[U])(implicit typeSystem: TypeSystemT): Rule[U] = super.flatMap(f)
+  override def flatMap[U](f: (T0) => Rule[U])(implicit typeSystem: TypeSystemT): Rule[U] = super.flatMap(f)
 
 
   def fail(message: String)(implicit typeSystem: TypeSystemT): TermTypingRule[TermType0, TypeType0, T] =

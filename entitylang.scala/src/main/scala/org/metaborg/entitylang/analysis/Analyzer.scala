@@ -159,10 +159,10 @@ object Analyzer {
         val typeSystem = ExpressionTypeSystem.typeSystem.withBindings(scope)
         val inferred = typeSystem.infer(term.exp3)
         inferred match {
-          case Left(TypeError(origin, message)) =>
-            model.reportError(message, origin)
+          case Left(errors) =>
+            model.foldWith(errors)(model => error => model.reportError(error.message, error.origin))
           case Right(inferredType) => {
-            println(s"${node.entity}.${node.name} : $inferredType")
+            println(s"${node.entity}.${node.name} : ${Type.ppType(inferredType)}")
             tpe match{
               case TopType() => model.copy(fields = model.fields +
                 (node -> d.copy(fieldType = inferredType))

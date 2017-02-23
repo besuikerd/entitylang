@@ -2,7 +2,7 @@ package org.metaborg.entitylang.analysis.types.typesystem.typingrule
 
 import org.metaborg.scalaterms.HasOrigin
 
-class FailTypingRule[TermType0 <: HasOrigin, TypeType0, T0 <: TypeType0](val term: HasOrigin, message: String) extends TypingRule{
+class FailTypingRule[TermType0 <: HasOrigin, TypeType0, T0](val term: HasOrigin, message: String) extends TypingRule{
   override type TermType = TermType0
   override type TypeType = TypeType0
   override type T = T0

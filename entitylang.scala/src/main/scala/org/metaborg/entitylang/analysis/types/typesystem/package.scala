@@ -4,7 +4,7 @@ import org.metaborg.entitylang.analysis.types.typesystem.typingrule._
 import org.metaborg.scalaterms.HasOrigin
 
 package object typesystem {
-  type TopLevelTypingRule[TermType0, TypeType0] = TypeSystem[TermType0, TypeType0] => PartialFunction[TermType0, TypingRule{type TermType = TermType0; type TypeType = TypeType0}]
+  type TopLevelTypingRule[TermType0, TypeType0] = TypeSystem[TermType0, TypeType0] => PartialFunction[TermType0, TypingRule.Aux[TermType0, TypeType0, TypeType0]] //TypingRule{type TermType = TermType0; type TypeType = TypeType0}]
 
   def matching[TermType <: HasOrigin, TypeType](terms: TermType*)(implicit typeSystem: TypeSystem[TermType, TypeType]): TypingRule.Aux[TermType, TypeType, TypeType] = new MatchingTypingRule[TermType, TypeType](terms:_*)
 
