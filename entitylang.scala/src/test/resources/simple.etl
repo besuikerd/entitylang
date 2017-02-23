@@ -1,7 +1,19 @@
-entity A {
-  a: Int
-  b: Int
-  c = a + 1
-  d = b + 1
-  e = c + d
+entity A{
+  amount: Int
+  weight: Float
+  value: Float = sum(children.value) + amount * weight
+
+  childAmount = children.amount + x
+
+  x: Int
+  y: Int+
+  z = x + y
+
+
+  a = b
+  b = c
+  c = d
+  d = 2
 }
+
+relation A.parent 1 <-> + A.children

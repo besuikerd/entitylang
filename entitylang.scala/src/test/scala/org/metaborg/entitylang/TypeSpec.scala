@@ -72,33 +72,33 @@ class TypeSpec extends FlatSpec{
   it should "typecheck with multiple entities" in {
     val program =
       """
-        |entity A {
+        |entity F {
         | a: Int
         | b: Boolean
-        | c = if(right.a > 1) right.a else a
-        | d = if(right.b) right.a else a
+        | c = if(g.b) 4 else a
+        | d = g.a + a > 4
         |}
         |
-        |entity B {
+        |entity G {
         | a: Int
         | b: Boolean
-        | c = if(left.b) 4 else a
-        | d = left.a + a > 4
+        | c = if(sum(fs.a) > 0) fs.a else a
+        | d = if(conj(fs.b)) 1 else a
         |}
         |
-        |relation A.right * <-> * B.left
+        |relation F.g 1 <-> * G.fs
       """.stripMargin
     val fieldAssert = createFieldAssert(program)
 
-    fieldAssert("A", "a")(int.one)
-    fieldAssert("A", "b")(boolean.one)
-    fieldAssert("A", "c")(int.one)
-    fieldAssert("A", "d")(int.one)
+    fieldAssert("F", "a")(int.one)
+    fieldAssert("F", "b")(boolean.one)
+    fieldAssert("F", "c")(int.one)
+    fieldAssert("F", "d")(boolean.one)
 
-    fieldAssert("B", "a")(int.one)
-    fieldAssert("B", "b")(boolean.one)
-    fieldAssert("B", "c")(int.one)
-    fieldAssert("B", "d")(boolean.one)
+    fieldAssert("G", "a")(int.one)
+    fieldAssert("G", "b")(boolean.one)
+    fieldAssert("G", "c")(int.*)
+    fieldAssert("G", "d")(int.one)
   }
 
   it should "typecheck cyclic dependencies" in {
@@ -138,7 +138,7 @@ class TypeSpec extends FlatSpec{
 
   "Expressions" should "typecheck" in {
 
-    println(inferType("true + false"))
+    nTypeErrors("true + false")(2)
 
     assertType("if(true) false else true")(boolean.one)
     illTyped("if(true) 3 else false")
@@ -181,6 +181,9 @@ class TypeSpec extends FlatSpec{
 
   def illTyped(exp: String) =
     inferType(exp).right.foreach(t => fail(s"SExp is well typed: $t"))
+
+  def nTypeErrors(exp:String)(n: Int) =
+    inferType(exp).fold(errors => if(errors.length != n) fail(s"expected $n type errors, got: ${errors.length}"), t => fail(s"SExp is well typed: $t"))
 
   def typeError(t: TypeError) = fail("type error @ " + t.errorString)
 

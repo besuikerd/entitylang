@@ -33,17 +33,3 @@ entity Submission{
 relation Submission.assignment 1 <-> * Assignment.submissions
 relation Student.submissions * <-> 1 Submission.student
 relation Submission.parent 1 <-> * Submission.children
-
-
-entity A{
-  amount: Int
-  weight: Float
-  value: Float = children.value + amount * weight
-  
-  a = b
-  b = c
-  c = d
-  d = 2
-}
-
-relation A.parent 1 <-> * A.children

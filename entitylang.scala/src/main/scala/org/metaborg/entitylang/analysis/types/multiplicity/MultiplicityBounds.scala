@@ -26,6 +26,6 @@ case class ZeroOrMore() extends MultiplicityBounds{
   override val upperBound: Multiplicity = many
 }
 case class OneOrMore() extends MultiplicityBounds{
-  override val lowerBound: Multiplicity = zero
+  override val lowerBound: Multiplicity = one
   override val upperBound: Multiplicity = many
 }

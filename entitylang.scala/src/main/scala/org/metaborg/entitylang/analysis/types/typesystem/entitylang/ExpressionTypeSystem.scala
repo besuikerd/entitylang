@@ -1,7 +1,9 @@
 package org.metaborg.entitylang.analysis.types.typesystem.entitylang
 
 import org.metaborg.entitylang.analysis.types._
+import org.metaborg.entitylang.analysis.types.multiplicity.Multiplicity
 import org.metaborg.entitylang.analysis.types.typesystem._
+import org.metaborg.entitylang.analysis.types.multiplicity._
 import org.metaborg.entitylang.analysis.types.typesystem.entitylang.typingrule._
 import org.metaborg.entitylang.analysis.types.typesystem.typingrule.{TermTypingRule, TypingRule}
 import org.metaborg.entitylang.desugar._
@@ -83,8 +85,12 @@ object ExpressionTypeSystem {
     case term @ BinExp(op, e1, e2) => op match {
       case NumericOperator(_) =>
         for {
-          (t1, t2) <- rule.all(numeric(e1), numeric(e2))
-        } yield lub(t1, t2)
+          (MultiplicityType(t1, m1), MultiplicityType(t2, m2)) <-
+            rule.all(
+              numeric(e1, zeroToOne),
+              numeric(e2, zeroToOne)
+            )
+        } yield MultiplicityType(lub(t1, t2), if(m1 > m2) m1 else m2)
 
       case Mod =>
         for{
@@ -151,7 +157,11 @@ object ExpressionTypeSystem {
     case m @ MemberAccess2(e, id, _) =>
       for {
         MultiplicityType(EntityType(name), multiplicity) <- entity(e)
-        t2 <- rule.fromTypeEnvironment(id, s"$name.${id.string}")
+        MultiplicityType(baseType, multiplicity2) <- rule.fromTypeEnvironment(id, s"$name.${id.string}").ofType[MultiplicityType[BaseType]]
+        t2 <- multiplicity.tryCompare(multiplicity2) match {
+          case Some(n) => rule.success[Type](MultiplicityType(baseType, if (n > 0) multiplicity2 else multiplicity))
+          case None => rule.fail[Type](id, "field can not have a valid multiplicity")
+        }
       } yield t2
   }
 }
