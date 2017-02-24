@@ -170,7 +170,7 @@ object Analyzer {
               case t1 @ MultiplicityType(baseType, m) =>
                 inferredType match{
                   case t2 @ MultiplicityType(baseType2, m2) =>
-                    if(baseType == baseType2){
+                    if(baseType == baseType2 || BaseType.partialOrdering.gteq(baseType, baseType2)){
                       if(m >= m2){
                         model
                       } else{

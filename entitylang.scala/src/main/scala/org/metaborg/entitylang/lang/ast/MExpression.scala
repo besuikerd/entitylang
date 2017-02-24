@@ -110,7 +110,7 @@ object MExpression {
         case ChoiceLeft2.fromSTerm(exp1) => scala.Some(exp1)
         case Apply2.fromSTerm(exp1) => scala.Some(exp1)
         case Ref1.fromSTerm(exp1) => scala.Some(exp1)
-        case This0.fromSTerm(exp1) => scala.Some(exp1)
+        case Null0.fromSTerm(exp1) => scala.Some(exp1)
         case SLiteral.fromSTerm(_1) => scala.Some(_1)
         case _ => scala.None
       }
@@ -356,14 +356,14 @@ object MExpression {
         }
       }
     }
-    case class This0(origin: scalaterms.Origin) extends SExp {
-      override def toSTerm = STerm.Cons("This", scala.Seq(), scala.Some(origin))
+    case class Null0(origin: scalaterms.Origin) extends SExp {
+      override def toSTerm = STerm.Cons("Null", scala.Seq(), scala.Some(origin))
     }
-    object This0 extends scalaterms.TermLikeCompanion[This0] {
-      override val fromSTerm: scalaterms.FromSTerm[This0] = new scalaterms.FromSTerm[This0] {
-        override def unapply(term: STerm): Option[This0] = term match {
-          case STerm.Cons("This", scala.Seq(), scala.Some(origin)) =>
-            scala.Some(This0(origin))
+    object Null0 extends scalaterms.TermLikeCompanion[Null0] {
+      override val fromSTerm: scalaterms.FromSTerm[Null0] = new scalaterms.FromSTerm[Null0] {
+        override def unapply(term: STerm): Option[Null0] = term match {
+          case STerm.Cons("Null", scala.Seq(), scala.Some(origin)) =>
+            scala.Some(Null0(origin))
           case _ => None
         }
       }

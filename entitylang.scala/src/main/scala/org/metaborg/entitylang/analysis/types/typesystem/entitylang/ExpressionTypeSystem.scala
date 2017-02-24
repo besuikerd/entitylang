@@ -4,10 +4,10 @@ import org.metaborg.entitylang.analysis.types._
 import org.metaborg.entitylang.analysis.types.multiplicity._
 import org.metaborg.entitylang.analysis.types.typesystem._
 import org.metaborg.entitylang.analysis.types.typesystem.entitylang.typingrule._
-import org.metaborg.entitylang.analysis.types.typesystem.typingrule.TypingRule
+import org.metaborg.entitylang.analysis.types.typesystem.typingrule.{AlternativeTypingRule, TypingRule}
 import org.metaborg.entitylang.desugar._
 import org.metaborg.entitylang.lang.ast.MExpression.SExp
-import org.metaborg.entitylang.lang.ast.MExpression.SExp.{Apply2, If3, MemberAccess2, Ref1}
+import org.metaborg.entitylang.lang.ast.MExpression.SExp.{Apply2, If3, MemberAccess2, Ref1, Null0}
 import org.metaborg.entitylang.lang.ast.MExpression.SLiteral._
 import org.metaborg.scalaterms.HasOrigin
 
@@ -29,11 +29,16 @@ object ExpressionTypeSystem extends FancyTypeSystem[SExp, Type]{
     t1 <- multiplicityType[BooleanType](e1).flatMap{t => upperBounded(e1, t, zeroToMany)}
   } yield boolean.one
 
+  val manyAnyToInt: Function1 = implicit typesystem => e1 => for{
+    t1 <- multiplicityType[BaseType](e1).flatMap{t => upperBounded(e1, t, zeroToMany)}
+  } yield int.one
+
   val functions: Map[String, FunctionN] = Map(
     "min" -> function1(manyNumToNum),
     "max" -> function1(manyNumToNum),
     "avg" -> function1(manyNumToNum),
     "sum" -> function1(manyNumToNum),
+    "count" -> function1(manyAnyToInt),
     "conj" -> function1(manyBoolToBool),
     "disj" -> function1(manyBoolToBool)
   )
@@ -55,6 +60,7 @@ object ExpressionTypeSystem extends FancyTypeSystem[SExp, Type]{
   rule[Int1](implicit typeSystem => i => typeRule.success(int.one))
   rule[String1](implicit typeSystem => s => typeRule.success(string.one))
   rule[Float1](implicit typeSystem => f => typeRule.success(float.one))
+  rule[Null0](implicit typeSystem => f => typeRule.success(any.zero))
 
   partialRule(implicit typeSystem => {
     case UnExp(op, e1) =>
@@ -68,7 +74,31 @@ object ExpressionTypeSystem extends FancyTypeSystem[SExp, Type]{
 
   partialRule(implicit typeSystem => {
     case term @ BinExp(op, e1, e2) => op match {
-      case NumericOperator(_) =>
+      case Add => {
+        val caseAdd = for {
+          (t1, t2) <-
+          typeRule.all(
+            boundedNumeric(e1, zeroToOne),
+            boundedNumeric(e2, zeroToOne)
+          )
+          t3 <- lub(e2, t1, t2)
+        } yield t3
+        val caseConcat = for{
+          (t1, t2) <-
+          typeRule.all(
+            boundedMultiplicityType[StringType](e1, zeroToOne),
+            boundedMultiplicityType[BaseType](e2, zeroToOne)
+          )
+          m <- lubMultiplicity(e2, t1.multiplicity, t2.multiplicity)
+        } yield string withMultiplicity m
+
+        typeRule.alternative(
+          caseAdd,
+          caseConcat
+        )
+      }
+
+      case NumericOperator(op) =>
         for {
           (t1, t2) <-
             typeRule.all(
@@ -136,7 +166,7 @@ object ExpressionTypeSystem extends FancyTypeSystem[SExp, Type]{
       for {
         (t1, t2) <-
           typeRule.all(
-            maybeEmpty(e1),
+            maybeEmpty[BaseType](e1),
             multiplicityType[BaseType](e2)
           )
         t3 <- lub(e2, t1, t2)

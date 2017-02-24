@@ -1,0 +1,24 @@
+  entity Student {
+    name       : String
+    
+    passedCourses : Int = sum(enrollments.pass2)
+  }
+  
+  entity Course {
+    name       : String
+ 
+    avgGrade    = avg(enrollments.grade)
+    passPerc    = sum(enrollments.pass2) / count(enrollments) * 100.0
+    numStudents = count(enrollments)
+  }
+  
+  entity Enrollment {
+    name       : String  = course.name + " " +student.name + 1
+    
+    grade      : Float?
+    pass       : Boolean = grade >= 5.5 <+ false
+    pass2      : Int     = if(pass) 1 else 0
+  }
+  
+  relation Course.enrollments *  <-> 1 Enrollment.course
+  relation Student.enrollments * <-> 1 Enrollment.student

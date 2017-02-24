@@ -10,5 +10,6 @@ package object types {
   val float = FloatType()
   val string = StringType()
   val boolean = BooleanType()
+  val any = AnyType()
 
 }

@@ -5,6 +5,7 @@ lexical syntax
   KEYWORD        = "this"
   KEYWORD        = "true"
   KEYWORD        = "false"
+  KEYWORD        = "null"
   
   ID             = [a-zA-Z] [a-zA-Z0-9]* 
   ID             = KEYWORD {reject}

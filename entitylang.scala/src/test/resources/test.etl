@@ -8,16 +8,16 @@ entity Student{
 entity Assignment{
   name: String
   minimum: Float?
-
   p = submissions.q
 }
 
 entity Submission{
   grade: Float?
-  pass: Boolean = grade >= assignment.minimum && conj(childPass) <+ false
-  childPass: Boolean* = children.pass
+  pass: Boolean = grade >= assignment.minimum && childPass <+ false
+  childPass: Boolean = conj(children.pass)
   
-  x = if(true) 5 else 4
+  
+  x = if(true) 5 else 5.0
   
   average = avg(children.grade)
 

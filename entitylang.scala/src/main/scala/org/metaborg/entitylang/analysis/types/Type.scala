@@ -6,13 +6,34 @@ sealed trait Type
 
 sealed trait BaseType
 
+object BaseType{
+
+
+  val partialOrdering: PartialOrdering[BaseType] = new PartialOrdering[BaseType]{
+    override def tryCompare(x: BaseType, y: BaseType): Option[Int] =
+      (x, y) match{
+        case (x: NumericType, y: NumericType) =>
+          NumericType.numericOrdering.tryCompare(x, y)
+        case (x: AnyType, y: AnyType) => Some(0)
+        case (x: AnyType, y) => Some(1)
+        case (x, y: AnyType) => Some(-1)
+        case _ => None
+      }
+
+    override def lteq(x: BaseType, y: BaseType): Boolean = tryCompare(x, y).exists(_ <= 0)
+  }
+
+}
+
 case class StringType() extends BaseType
 case class BooleanType() extends BaseType
+case class AnyType() extends BaseType
 
 sealed trait NumericType extends BaseType
 case class LongType() extends NumericType
 case class IntType() extends NumericType
 case class FloatType() extends NumericType
+
 
 object NumericType{
   implicit val numericOrdering: Ordering[NumericType] = new Ordering[NumericType]{
@@ -46,6 +67,7 @@ object Type{
     case IntType() => "int"
     case LongType() => "long"
     case FloatType() => "float"
+    case AnyType() => "any"
     case EntityType(name) => name
   }
 }

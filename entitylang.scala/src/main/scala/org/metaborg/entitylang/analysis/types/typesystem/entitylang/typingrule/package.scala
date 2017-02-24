@@ -73,7 +73,9 @@ package object typingrule {
     numeric(e).flatMap{t => upperBounded(e, t, upperBound)}
 
   def upperBounded[T <: BaseType](origin: HasOrigin, t: MultiplicityType[T], upperBound: MultiplicityBounds)(implicit typeSystem: TypeSystem[SExp, Type]): TermTypingRule[SExp, Type, MultiplicityType[T]] =
-    typeRule.success(origin, t).filter(_.multiplicity <= upperBound, t => s"invalid bounds, expected at most $upperBound, got ${t.multiplicity}")
+    typeRule.success(origin, t).filter(
+      _.multiplicity <= upperBound, t => s"invalid bounds, expected at most $upperBound, got ${t.multiplicity}"
+    )
 
   def entity(e: SExp)(implicit typeSystem: TypeSystem[SExp, Type]): TermTypingRule[SExp, Type, MultiplicityType[EntityType]] =
     multiplicityType[EntityType](e, "Entity")

@@ -2,7 +2,7 @@ package org.metaborg.entitylang
 
 import org.metaborg.entitylang.analysis.{AnalysisModel, Analyzer}
 import org.metaborg.entitylang.analysis.types._
-import org.metaborg.entitylang.analysis.types.multiplicity.{ExactlyOne, MultiplicityBounds}
+import org.metaborg.entitylang.analysis.types.multiplicity._
 import org.metaborg.entitylang.analysis.types.typesystem.entitylang.ExpressionTypeSystem
 import org.metaborg.entitylang.analysis.types.typesystem.error.TypeError
 import org.metaborg.entitylang.analysis.types.typesystem.typingrule.TypingRule
@@ -109,7 +109,7 @@ class TypeSpec extends FlatSpec{
         |entity A{
         |  amount: Int
         |  weight: Float
-        |  value: Float = children.value + amount * weight
+        |  value: Float = sum(children.value) + amount * weight
         |}
         |
         |relation A.parent 1 <-> * A.children
@@ -118,6 +118,8 @@ class TypeSpec extends FlatSpec{
     fieldAssert("A", "amount")(int.one)
     fieldAssert("A", "weight")(float.one)
     fieldAssert("A", "value")(float.one)
+    fieldAssert("A", "children")(EntityType("A") withMultiplicity zeroToMany)
+//    fieldAssert("A", "childValue")(float.*)
   }
 
   def createFieldAssert(program: String): (String, String) => (Type) => Assertion = {
@@ -127,7 +129,7 @@ class TypeSpec extends FlatSpec{
       assertFieldType(model)
     else
       (_, _) => (_) => fail(
-        s"The following type errors occurred on the model:\n${model.errors.map(e => if(e.origin == null) "  [missing origin]" else s"  [${e.origin.filename} ${e.origin.line}:${e.origin.column}, ${e.origin.startOffset}-${e.origin.endOffset}]: ${e.message}").mkString("\n")}")
+        s"The following type errors occurred on the model:\n${model.errors.map(e => "  " + (if(e.origin == null) "[missing origin]" else s"[${e.origin.filename} ${e.origin.line}:${e.origin.column}, ${e.origin.startOffset}-${e.origin.endOffset}]") + s": ${e.message}").mkString("\n")}")
   }
 
   def assertFieldType(model: AnalysisModel)(entity: String, field: String)(t: Type) = model.fields.collectFirst{
@@ -155,6 +157,10 @@ class TypeSpec extends FlatSpec{
     assertType("1.0 + 1")(float.one)
     illTyped("1 + true")
     illTyped("true + 1")
+    assertType(""" "foo" + "bar" """)(string.one)
+    assertType(""" "foo" + 1 """)(string.one)
+    assertType(""" "foo" + true """)(string.one)
+    illTyped(""" 1 + "bar" """)
 
 
     assertType("5 > 4")(boolean.one)
