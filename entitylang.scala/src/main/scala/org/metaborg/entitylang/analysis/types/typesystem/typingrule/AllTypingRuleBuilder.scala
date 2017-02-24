@@ -10,7 +10,7 @@ class AllTypingRuleBuilder[TermType <: HasOrigin, TypeType] extends AnyRef{
   def apply[T1, T2](r1: TypingRule.Aux[TermType, TypeType, T1], r2: TypingRule.Aux[TermType, TypeType, T2])(implicit typeSystem: TypeSystem[TermType, TypeType]): TypingRule.Aux[TermType, TypeType, (T1, T2)] = {
     val t1 = r1.run
     val t2 = r2.run
-    rule.result(r1.run.merge(r2.run))
+    typeRule.result(r1.run.merge(r2.run))
   }
 
   def apply[T0, T1, T2](r0: TypingRule.Aux[TermType, TypeType, T0],r1: TypingRule.Aux[TermType, TypeType, T1],r2: TypingRule.Aux[TermType, TypeType, T2])(implicit typeSystem: TypeSystem[TermType, TypeType]): TypingRule.Aux[TermType, TypeType, (T0, T1, T2)] = apply(apply(r0, r1), r2).map(tpl => TupleExtensions.flatten(tpl))

@@ -9,6 +9,8 @@ import org.metaborg.entitylang.analysis.types.typesystem.typingrule.TypingRule
 import org.metaborg.entitylang.lang.ast.MExpression.SExp
 import org.metaborg.entitylang.lang.ast.MExpression.SExp.If3
 import org.metaborg.entitylang.parser.{EntityLangParserProvider, SpoofaxParser}
+import org.scalactic.Prettifier
+import org.scalactic.source.Position
 import org.scalatest.{Assertion, FlatSpec}
 
 import scala.reflect.ClassTag
@@ -124,14 +126,15 @@ class TypeSpec extends FlatSpec{
     if(model.errors.isEmpty)
       assertFieldType(model)
     else
-      (_, _) => (_) => fail(model.errors.head.message)
+      (_, _) => (_) => fail(
+        s"The following type errors occurred on the model:\n${model.errors.map(e => if(e.origin == null) "  [missing origin]" else s"  [${e.origin.filename} ${e.origin.line}:${e.origin.column}, ${e.origin.startOffset}-${e.origin.endOffset}]: ${e.message}").mkString("\n")}")
   }
 
   def assertFieldType(model: AnalysisModel)(entity: String, field: String)(t: Type) = model.fields.collectFirst{
     case (fieldNode, dataNode) if fieldNode.entity == entity && fieldNode.name == field => dataNode.fieldType
   } match{
     case Some(t2) =>
-      assertResult(t)(t2)
+      assertResult(t)(t2)(prettifier = Prettifier({case t: Type => Type.ppType(t)}), implicitly[Position])
     case None => fail(s"Field not found: $entity.$field")
   }
 
@@ -160,15 +163,10 @@ class TypeSpec extends FlatSpec{
     assertType("max(2)")(int.one)
     illTyped("f(true)")
 
-    assertType("""epic(2)""")(string ~>: boolean ~>: int)
-    assertType("""epic(2 "epic")""")(boolean ~>: int)
-    assertType("""epic(2 "epic" true)""")(int.one)
-    illTyped("""epic(2 "epic" true 4)""")
-
   }
 
   def inferType(exp: SExp): TypingRule.Aux[SExp, Type, Type]#TypingResult =
-    ExpressionTypeSystem.typeSystem.infer(exp)
+    ExpressionTypeSystem.infer(exp)
 
   def parseError(cause: SpoofaxParser.Error) = fail("Parse error: " + cause)
 
@@ -189,7 +187,7 @@ class TypeSpec extends FlatSpec{
 
   def assertType(exp: String)(t: Type) = {
     import typesystem._
-    implicit val ts = ExpressionTypeSystem.typeSystem
+    implicit val ts = ExpressionTypeSystem
     implicit val pp: (Type) => String = Type.ppType
     val r = for {
       e <- parse(exp).left.map(e => "Parse error: " + e.mkString("\n")).right

@@ -11,7 +11,7 @@ package object typesystem {
   def success[TermType <: HasOrigin, TypeType, T <: TypeType](t: T)(implicit typeSystem: TypeSystem[TermType, TypeType]) = new ResultTypingRule[TermType, TypeType, T](Right(t))
   def fail[TermType <: HasOrigin, TypeType, Term <: TermType](term: HasOrigin, message: String)(implicit typeSystem: TypeSystem[TermType, TypeType]) = new FailTypingRule[TermType, TypeType, TypeType](term, message)
 
-  def rule[TermType <: HasOrigin, TypeType](implicit typeSystem: TypeSystem[TermType, TypeType]) = new RichTypingRule[TermType, TypeType]
+  def typeRule[TermType <: HasOrigin, TypeType](implicit typeSystem: TypeSystem[TermType, TypeType]) = new RichTypingRule[TermType, TypeType]
 
   @inline implicit def enrichedTermTypingRule[TermType <: HasOrigin, TypeType, Term <: TermType](term: Term)(implicit typeSystem: TypeSystem[TermType, TypeType]) = new EnrichedTermTypingRule[TermType, TypeType, Term](term)
 }

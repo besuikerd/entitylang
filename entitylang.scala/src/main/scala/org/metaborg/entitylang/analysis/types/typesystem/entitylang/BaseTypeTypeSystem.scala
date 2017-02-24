@@ -6,8 +6,10 @@ import org.metaborg.entitylang.lang.ast.MType.SPrimitiveType
 import org.metaborg.entitylang.lang.ast.MType.SPrimitiveType.{Boolean0, Float0, Int0, String0}
 
 object BaseTypeTypeSystem extends SimpleTypeSystem[SPrimitiveType, BaseType](implicit typeSystem => {
-  case Boolean0(origin) => rule.success(boolean)
-  case Int0(origin) => rule.success(int)
-  case Float0(origin) => rule.success(float)
-  case String0(origin) => rule.success(string)
-})
+  case Boolean0(origin) => typeRule.success(boolean)
+  case Int0(origin) => typeRule.success(int)
+  case Float0(origin) => typeRule.success(float)
+  case String0(origin) => typeRule.success(string)
+}){
+  override def prettyPrint(t: BaseType): String = Type.ppBaseType(t)
+}

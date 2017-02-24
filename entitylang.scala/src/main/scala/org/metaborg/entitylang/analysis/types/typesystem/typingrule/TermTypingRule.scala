@@ -17,13 +17,13 @@ trait TermTypingRule[TermType0 <: HasOrigin, TypeType0, T0] extends TypingRule{
 
   def filter(f: T => Boolean, message: T => String)(implicit typeSystem: TypeSystemT): TermTypingRule[TermType, TypeType, T] = filter(f).flatMap[T]{ t =>
     if(f(t))
-      rule.success(t)
+      typeRule.success(t)
     else
-      rule.fail(term, message(t))
+      typeRule.fail(term, message(t))
   }.bindTerm(term)
 
   def fail(message: String)(implicit typeSystem: TypeSystemT): TermTypingRule[TermType0, TypeType0, T] =
-    rule.fail(term, message).bindTerm(term)
+    typeRule.fail(term, message).bindTerm(term)
 
   def ofType[U <: T : ClassTag](implicit typeSystem: TypeSystemT): TermTypingRule[TermType0, TypeType0, U] = ofType(None)
   def ofType[U <: T : ClassTag](humanReadableName: String)(implicit typeSystem: TypeSystemT): TermTypingRule[TermType0, TypeType0, U] = ofType(Some(humanReadableName))
@@ -31,19 +31,19 @@ trait TermTypingRule[TermType0 <: HasOrigin, TypeType0, T0] extends TypingRule{
     val r = flatMap{ t =>
       val cls = classTag[U].runtimeClass.asInstanceOf[Class[U]]
       if(cls.isInstance(t))
-        rule.success[U](cls.cast(t))
+        typeRule.success[U](cls.cast(t))
       else
-        rule.fail[U](term, s"Expected type: ${humanReadableName.getOrElse(cls.getTypeName)}, got: $t")
+        typeRule.fail[U](term, s"Expected type: ${humanReadableName.getOrElse(cls.getTypeName)}, got: $t")
     }
     r.bindTerm(term)
   }
 
-  def ofType[U <: T](t: U)(implicit typeSystemT: TypeSystemT, ppType: T => String): TermTypingRule[TermType0, TypeType0, U] = {
+  def ofType[U <: TypeType](t: U)(implicit typeSystem: TypeSystemT, subtype: T <:< TypeType): TermTypingRule[TermType0, TypeType0, U] = {
     val r = flatMap[U]{ t2 =>
       if (t == t2) {
-        rule.success[U](t)
+        typeRule.success[U](t)
       } else {
-        rule.fail[U](term, s"Expected type: ${ppType(t)}, got: ${ppType(t2)}")
+        typeRule.fail[U](term, s"Expected type: ${typeSystem.prettyPrint(t)}, got: ${typeSystem.prettyPrint(t2)}")
       }
     }
     r.bindTerm(term)

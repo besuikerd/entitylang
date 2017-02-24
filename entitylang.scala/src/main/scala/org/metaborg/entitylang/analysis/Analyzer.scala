@@ -156,7 +156,7 @@ object Analyzer {
         val scope = model.entityScope(node.entity) ++ model.fields.map{
           case (field, data) => s"${field.entity}.${field.name}" -> data.fieldType
         }
-        val typeSystem = ExpressionTypeSystem.typeSystem.withBindings(scope)
+        val typeSystem = ExpressionTypeSystem.withBindings(scope)
         val inferred = typeSystem.infer(term.exp3)
         inferred match {
           case Left(errors) =>
@@ -167,8 +167,21 @@ object Analyzer {
               case TopType() => model.copy(fields = model.fields +
                 (node -> d.copy(fieldType = inferredType))
               )
-              case t if inferredType != t => model.reportError(s"Expected type: $t, got: $inferredType", term.exp3.origin)
-              case t => model
+              case t1 @ MultiplicityType(baseType, m) =>
+                inferredType match{
+                  case t2 @ MultiplicityType(baseType2, m2) =>
+                    if(baseType == baseType2){
+                      if(m >= m2){
+                        model
+                      } else{
+                        model.reportError(s"Multiplicities are not compatible: $m <-> $m2", term.exp3.origin)
+                      }
+                    } else{
+                      model.reportError(s"Expected base type ${Type.ppBaseType(baseType)}, got: ${Type.ppBaseType(baseType2)}", term.exp3.origin)
+                    }
+                  case otherwise => model.reportError(s"Expected type with multiplicity, got: ${Type.ppType(otherwise)}", term.exp3.origin)
+                }
+              case t => model.reportError("Field type should be a type with multiplicity", term.optionaltype2.origin)
             }
           }
         }

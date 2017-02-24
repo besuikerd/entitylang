@@ -13,8 +13,8 @@ object PrimitiveTypeWithMultiplicityTypeSystem extends SimpleTypeSystem[SPrimiti
       baseType <- BaseTypeTypeSystem.infer(primitivetype1).right
       multiplicity <- MultiplicityTypeSystem.infer(multiplicity2).right
     } yield MultiplicityType(baseType, multiplicity)
-    rule.result(result)
+    typeRule.result(result)
   case PrimitiveTypeWithDefaultMultiplicity1(primitivetype1, origin) =>
     val result = BaseTypeTypeSystem.infer(primitivetype1).right.map(t => MultiplicityType(t, oneToOne))
-    rule.result(result)
+    typeRule.result(result)
 })

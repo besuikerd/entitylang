@@ -11,22 +11,13 @@ import org.metaborg.entitylang.lang.ast.MExpression.SExp.{Apply2, If3, MemberAcc
 import org.metaborg.entitylang.lang.ast.MExpression.SLiteral._
 import org.metaborg.scalaterms.HasOrigin
 
-object ExpressionTypeSystem {
-//  val builtin = Map(
-//    "min" -> (int ~>: int),
-//    "max" -> (int ~>: int),
-//    "avg" -> (int ~>: int),
-//    "sum" -> (int ~>: int),
-//    "conj" -> (boolean ~>: boolean),
-//    "disj" -> (boolean ~>: boolean),
-//  )
-
+object ExpressionTypeSystem extends FancyTypeSystem[SExp, Type]{
   type FunctionN = TypeSystem[SExp, Type] => HasOrigin => Seq[SExp] => TypingRule.Aux[SExp, Type, Type]
   type Function1 = TypeSystem[SExp, Type] => SExp => TypingRule.Aux[SExp, Type, Type]
 
   def function1(inner: Function1): FunctionN = implicit typeSystem => origin => expressions =>
     if(expressions.isEmpty)
-      rule.fail(origin, "Expected at least 1 argument")
+      typeRule.fail(origin, "Expected at least 1 argument")
     else
       inner(typeSystem)(expressions.head)
 
@@ -47,55 +38,25 @@ object ExpressionTypeSystem {
     "disj" -> function1(manyBoolToBool)
   )
 
-  val typeSystem = TypeSystem(
-    if3,
-    true0,
-    false0,
-    int1,
-    string1,
-    float1,
-    unExp,
-    binExp,
-    apply2,
-    ref1,
-    memberAccess2
-  )
-
-
-
-  implicit val ppType: (Type) => String = Type.ppType
-
-  type Rule = TopLevelTypingRule[SExp, Type]
-
-  def if3: Rule = implicit typeSystem => {
+  rule[If3](implicit typeSystem => {
     case If3(e1, e2, e3, _) =>
       for{
-        t1 <- e1.infer.ofType(boolean.one)(typeSystem, ppType)
-        t2 <- matching(e2, e3)
-      } yield t2
-  }
+        t1 <- e1.infer.ofType(boolean.one)
+        (t2, t3) <- typeRule.all(
+          multiplicityType[BaseType](e2),
+          multiplicityType[BaseType](e3)
+        )
+        t4 <- lub(e2, t2, t3)
+      } yield t4
+  })
 
-  def true0: Rule = implicit typeSystem => {
-    case t @ True0(_) => rule.success(boolean.one)
-  }
+  rule[True0](implicit typeSystem => t => typeRule.success(boolean.one))
+  rule[False0](implicit typeSystem => f => typeRule.success(boolean.one))
+  rule[Int1](implicit typeSystem => i => typeRule.success(int.one))
+  rule[String1](implicit typeSystem => s => typeRule.success(string.one))
+  rule[Float1](implicit typeSystem => f => typeRule.success(float.one))
 
-  def false0: Rule = implicit typeSystem => {
-    case False0(_) => rule.success(boolean.one)
-  }
-
-  def int1: Rule = implicit typeSystem =>{
-    case Int1(_, _) => rule.success(int.one)
-  }
-
-  def string1: Rule = implicit typeSystem => {
-    case String1(_, _) => rule.success(string.one)
-  }
-
-  def float1: Rule = implicit typeSystem => {
-    case Float1(_, _) => rule.success(float.one)
-  }
-
-  def unExp: Rule = implicit typeSystem => {
+  partialRule(implicit typeSystem => {
     case UnExp(op, e1) =>
       op match {
         case Not =>
@@ -103,14 +64,14 @@ object ExpressionTypeSystem {
             t1 <- e1.infer.ofType(boolean.one)
           } yield t1
       }
-  }
+  })
 
-  def binExp: Rule = implicit typeSystem => {
+  partialRule(implicit typeSystem => {
     case term @ BinExp(op, e1, e2) => op match {
       case NumericOperator(_) =>
         for {
           (t1, t2) <-
-            rule.all(
+            typeRule.all(
               boundedNumeric(e1, zeroToOne),
               boundedNumeric(e2, zeroToOne)
             )
@@ -119,16 +80,16 @@ object ExpressionTypeSystem {
 
       case Mod =>
         for{
-          (t1, t2) <- rule.all(
-            boundedMultiplicityType[IntType](e1, zeroToOne),
-            boundedMultiplicityType[IntType](e2, zeroToOne)
+          (t1, t2) <- typeRule.all(
+            boundedMultiplicityType(int, e1, zeroToOne),
+            boundedMultiplicityType(int, e2, zeroToOne)
           )
           m <- lubMultiplicity(e2, t1.multiplicity, t2.multiplicity)
         } yield int withMultiplicity m
 
       case CompareOperator(_) =>
         for{
-          (t1, t2) <- rule.all(
+          (t1, t2) <- typeRule.all(
             boundedNumeric(e1, zeroToOne),
             boundedNumeric(e2, zeroToOne)
           )
@@ -137,7 +98,7 @@ object ExpressionTypeSystem {
 
       case Equal =>
         for{
-          (t1, t2) <- rule.all(
+          (t1, t2) <- typeRule.all(
             boundedMultiplicityType[BaseType](e1, zeroToOne),
             boundedMultiplicityType[BaseType](e2, zeroToOne)
           )
@@ -146,7 +107,7 @@ object ExpressionTypeSystem {
 
       case Inequal =>
         for{
-          (t1, t2) <- rule.all(
+          (t1, t2) <- typeRule.all(
             boundedMultiplicityType[BaseType](e1, zeroToOne),
             boundedMultiplicityType[BaseType](e2, zeroToOne)
           )
@@ -155,18 +116,18 @@ object ExpressionTypeSystem {
 
       case And =>
         for{
-          (t1, t2) <- rule.all(
-            boundedMultiplicityType[BooleanType](e1, zeroToOne),
-            boundedMultiplicityType[BooleanType](e2, zeroToOne)
+          (t1, t2) <- typeRule.all(
+            boundedMultiplicityType(boolean, e1, zeroToOne),
+            boundedMultiplicityType(boolean, e2, zeroToOne)
           )
           t3 <- lub(e2, t1, t2)
         } yield t3
 
       case Or =>
         for{
-          (t1, t2) <- rule.all(
-            boundedMultiplicityType[BooleanType](e1, zeroToOne),
-            boundedMultiplicityType[BooleanType](e2, zeroToOne)
+          (t1, t2) <- typeRule.all(
+            boundedMultiplicityType(boolean, e1, zeroToOne),
+            boundedMultiplicityType(boolean, e2, zeroToOne)
           )
           t3 <- lub(e2, t1, t2)
         } yield t3
@@ -174,7 +135,7 @@ object ExpressionTypeSystem {
       case ChoiceLeft =>
       for {
         (t1, t2) <-
-          rule.all(
+          typeRule.all(
             maybeEmpty(e1),
             multiplicityType[BaseType](e2)
           )
@@ -182,20 +143,20 @@ object ExpressionTypeSystem {
       } yield t2
 
       //      case Merge =>
-      case _ => rule.fail(term, op + " not implemented yet")
+      case _ => typeRule.fail(term, op + " not implemented yet")
     }
-  }
+  })
 
-  def apply2: Rule = implicit typeSystem => {
+  rule[Apply2](implicit typeSystem => {
     case a @ Apply2(e1, args, _) =>
       e1 match{
         case Ref1(id, _) => functions.get(id.string) match{
           case Some(f) => f.apply(typeSystem)(e1)(args.value)
-          case None => rule.fail(e1, "function not found: " + id.string)
+          case None => typeRule.fail(e1, "function not found: " + id.string)
         }
-        case _ => rule.fail(e1, "expected an identifier")
+        case _ => typeRule.fail(e1, "expected an identifier")
       }
-  }
+  })
 
 //  def apply2: Rule = implicit typeSystem => {
 //    case a@Apply2(e1, args, _) =>
@@ -210,22 +171,22 @@ object ExpressionTypeSystem {
 //      }
 //    }
 
-  def ref1: Rule = implicit typeSystem => {
+  rule[Ref1](implicit typeSystem => {
     case r @ Ref1(id1, _) =>
       for {
-        t1 <- rule.fromTypeEnvironment(r, id1.string)
+        t1 <- typeRule.fromTypeEnvironment(r, id1.string)
       } yield t1
-  }
+  })
 
-  def memberAccess2: Rule = implicit typeSystem => {
+  rule[MemberAccess2](implicit typeSystem => {
     case m @ MemberAccess2(e, id, _) =>
       for {
         MultiplicityType(EntityType(name), multiplicity) <- entity(e)
-        MultiplicityType(baseType, multiplicity2) <- rule.fromTypeEnvironment(id, s"$name.${id.string}").ofType[MultiplicityType[BaseType]]
+        MultiplicityType(baseType, multiplicity2) <- typeRule.fromTypeEnvironment(id, s"$name.${id.string}").ofType[MultiplicityType[BaseType]]
         t2 <- multiplicity.tryCompare(multiplicity2) match {
-          case Some(n) => rule.success[Type](MultiplicityType(baseType, if (n > 0) multiplicity2 else multiplicity))
-          case None => rule.fail[Type](id, "field can not have a valid multiplicity")
+          case Some(n) => typeRule.success[Type](MultiplicityType(baseType, if (n > 0) multiplicity2 else multiplicity))
+          case None => typeRule.fail[Type](id, "field can not have a valid multiplicity")
         }
       } yield t2
-  }
+  })
 }

@@ -11,7 +11,7 @@ entity A{
 
   f: Boolean
   childF = children.f
-  g = conj(childF)
+  g: Boolean = conj(childF)
 
 
   a = b
