@@ -32,7 +32,7 @@ context-free syntax
   Exp.Merge              = <<Exp> ++ <Exp>>        {left}
   Exp.ChoiceLeft         = [[Exp] <+ [Exp]]        {left}
 
-  Exp.Apply              = <<Exp>(<Exp*>)>           {left}
+  Exp.Apply              = <<Exp>(<{Exp ","}*>)>           {left}
 
   Exp = Literal
   Literal.Int = INT

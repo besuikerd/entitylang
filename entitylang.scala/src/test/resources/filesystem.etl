@@ -3,8 +3,7 @@ entity File {
   isDirectory: Boolean
   fileSize: Int?
   size: Int = if(isDirectory) sum(children.size) else (fileSize <+ 0)
-  
-  bla: Float = if(true) 5 else 4.0 
+  bla: Float? = if(true) 5 else null 
 }
 
 relation File.children * <-> 1 File.parent

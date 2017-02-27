@@ -138,6 +138,7 @@ class TypeSpec extends FlatSpec{
         |
         |relation A.parent 1 <-> * A.children
       """.stripMargin
+
     val fieldAssert = createFieldAssert(program)
     fieldAssert("A", "amount")(int.one)
     fieldAssert("A", "weight")(float.one)

@@ -26,7 +26,7 @@ entity Submission{
   
   bla = null
   
-  z = y <+ null
+  z: Int = y <+ 5
  
 
   pass2 = pass || average > 5.5

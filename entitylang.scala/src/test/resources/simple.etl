@@ -13,7 +13,6 @@ entity A{
   childF = children.f
   g: Boolean = conj(childF)
 
-
   a = b
   b = c
   c = d

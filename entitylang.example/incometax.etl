@@ -1,0 +1,51 @@
+entity Income {
+    name                : String  = "Untitled"
+    monthlySalary       : Float
+    holidayAllowance    : Float   = 8.0
+    thirteenthMonth     : Boolean = false
+    leaseCarPrice       : Float?
+    leaseCarPercent     : Float?
+    leaseCarAddition    = leaseCarPrice * leaseCarPercent / 100.0
+    grossSalary         = monthlySalary * (1.0 + holidayAllowance / 100.0 + (if(thirteenthMonth) 1.0 / 12.0 else 0.0))
+    grossSalaryYear     = grossSalary * 12.0
+    taxableIncome       = grossSalaryYear + (leaseCarAddition <+ 0.0)
+    taxBracket1         = 19922.0
+    taxRate1            = 36.55 / 100.0
+    taxBracket2         = 33715.0
+    taxRate2            = 40.15 / 100.0
+    taxBracket3         = 66421.0
+    taxRate3            = 40.15 / 100.0
+    taxRate4            = 52.0 / 100.0
+    salaryBracket1      = min(taxableIncome + taxBracket1)
+    salaryBracket2      = max(min(taxableIncome + taxBracket2) - taxBracket1)
+    salaryBracket3      = max(0.0 + min(taxableIncome + taxBracket3) - taxBracket2)
+    salaryBracket4      = max(taxableIncome - taxBracket3)
+    incomeTax           =
+      salaryBracket1 * taxRate1 + salaryBracket2 * taxRate2 + salaryBracket3 * taxRate3 +
+      salaryBracket4 * taxRate4
+    generalTaxDiscount  = 
+      if(taxableIncome < 19222) 
+        2242 
+      else if(taxableIncome < 66417) 
+        2242.0 - 0.04822 * (taxableIncome - 19922.0) 
+      else 
+        0
+    employedTaxDiscount =
+      if(taxableIncome < 9147) 
+        0.0193 * taxableIncome
+      else if(taxableIncome < 19758.0)
+        146.0 + 0.27698 * (taxableIncome - 9147.0)
+      else if(taxableIncome < 34015.0)
+        3103
+      else
+        0
+    tax                    = incomeTax - generalTaxDiscount - employedTaxDiscount
+    netSalaryYear          = grossSalaryYear - tax
+    netSalary              = netSalaryYear / 12.0
+    summary                =
+      name + " has a gross salary of " + grossSalary + " per month and a net salary of " +
+      netSalary  +
+      " per month" +
+      (if(count(leaseCarPrice) > 0) " with a lease car" else "") +
+      "."
+  }
