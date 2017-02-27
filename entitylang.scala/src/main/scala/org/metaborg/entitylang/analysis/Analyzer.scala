@@ -126,23 +126,52 @@ object Analyzer {
     scss.foldLeft(model) {
       case (model, scc) => scc match{
         case Left(cycle) => {
-          //arrange the cycle so that a known type is at the head of the cycle
-          val ordered = cycle.reorderCyclic { node =>
-            val d = model.fields(node.value.asInstanceOf[EntityFieldNode])
-            d.fieldType != TopType()
-          }
 
-          ordered match{
-            case Some(order) =>
-              order.foldLeft(model)(inferFieldType)
 
-            //no order found; types cannot be inferred
-            case None => cycle.foldLeft(model){
-              case (model, field) =>
-                val fieldData = model.fields(field.value.asInstanceOf[EntityFieldNode])
-                model.reportError("Cycle in found in derived values; type could not be inferred", fieldData.term.origin)
+          val nodeData = cycle.map(n => model.fields(n.value.asInstanceOf[EntityFieldNode]))
+          val (typed, untyped) = nodeData.partition(_.fieldType != top)
+
+          def resolve(model: AnalysisModel, typed: Seq[EntityFieldNodeData], untyped: Seq[EntityFieldNodeData]): AnalysisModel = {
+            if(untyped.isEmpty){
+              model
+            } else{
+              //find untyped nodes that only have dependencies on typed nodes
+              val (typeNow, typeLater) = untyped.partition(
+                n => model.graph.get(n.node).outgoing.map(_.to.value.asInstanceOf[EntityFieldNode]).forall(n => !untyped.exists(n2 => n2.node == n))
+              )
+
+              if(typeNow.isEmpty && typeLater.nonEmpty){
+                typeLater.foldLeft(model){ case (model, n) => model.reportError(s"Could not resolve cyclic dependency", n.term.origin)}
+              } else{
+                val model2 = typeNow.foldLeft(model){
+                  case (model, n) => inferFieldType(model, n)
+                }
+
+                resolve(model2, typed ++ typeNow, typeLater)
+              }
             }
           }
+
+          resolve(model, typed, untyped)
+
+
+//          //arrange the cycle so that a known type is at the head of the cycle
+//          val ordered = cycle.reorderCyclic { node =>
+//            val d = model.fields(node.value.asInstanceOf[EntityFieldNode])
+//            d.fieldType != TopType()
+//          }
+//
+//          ordered match{
+//            case Some(order) =>
+//              order.foldLeft(model)(inferFieldType)
+//
+//            //no order found; types cannot be inferred
+//            case None => cycle.foldLeft(model){
+//              case (model, field) =>
+//                val fieldData = model.fields(field.value.asInstanceOf[EntityFieldNode])
+//                model.reportError("Cycle in found in derived values; type could not be inferred", fieldData.term.origin)
+//            }
+//          }
         }
 
         case Right(node) => inferFieldType(model, node)
@@ -151,42 +180,44 @@ object Analyzer {
   }
 
   def inferFieldType(model: AnalysisModel, node: AnalysisNode): AnalysisModel = {
-    model.fields(node.value.asInstanceOf[EntityFieldNode]) match{
-      case d @ DerivedValueNodeData(tpe, node, term) => {
-        val scope = model.entityScope(node.entity) ++ model.fields.map{
-          case (field, data) => s"${field.entity}.${field.name}" -> data.fieldType
-        }
-        val typeSystem = ExpressionTypeSystem.withBindings(scope)
-        val inferred = typeSystem.infer(term.exp3)
-        inferred match {
-          case Left(errors) =>
-            model.foldWith(errors)(model => error => model.reportError(error.message, error.origin))
-          case Right(inferredType) => {
-            println(s"${node.entity}.${node.name} : ${Type.ppType(inferredType)}")
-            tpe match{
-              case TopType() => model.copy(fields = model.fields +
-                (node -> d.copy(fieldType = inferredType))
-              )
-              case t1 @ MultiplicityType(baseType, m) =>
-                inferredType match{
-                  case t2 @ MultiplicityType(baseType2, m2) =>
-                    if(baseType == baseType2 || BaseType.partialOrdering.gteq(baseType, baseType2)){
-                      if(m >= m2){
-                        model
-                      } else{
-                        model.reportError(s"Multiplicities are not compatible: $m <-> $m2", term.exp3.origin)
-                      }
+    inferFieldType(model, model.fields(node.value.asInstanceOf[EntityFieldNode]))
+  }
+
+  def inferFieldType(model: AnalysisModel, node: EntityFieldNodeData): AnalysisModel = node match {
+    case d @ DerivedValueNodeData(tpe, node, term) => {
+      val scope = model.entityScope(node.entity) ++ model.fields.map{
+        case (field, data) => s"${field.entity}.${field.name}" -> data.fieldType
+      }
+      val typeSystem = ExpressionTypeSystem.withBindings(scope)
+      val inferred = typeSystem.infer(term.exp3)
+      inferred match {
+        case Left(errors) =>
+          model.foldWith(errors)(model => error => model.reportError(error.message, error.origin))
+        case Right(inferredType) => {
+          println(s"${node.entity}.${node.name} : ${Type.ppType(inferredType)}")
+          tpe match{
+            case TopType() => model.copy(fields = model.fields +
+              (node -> d.copy(fieldType = inferredType))
+            )
+            case t1 @ MultiplicityType(baseType, m) =>
+              inferredType match{
+                case t2 @ MultiplicityType(baseType2, m2) =>
+                  if(baseType == baseType2 || BaseType.partialOrdering.gteq(baseType, baseType2)){
+                    if(m >= m2){
+                      model
                     } else{
-                      model.reportError(s"Expected base type ${Type.ppBaseType(baseType)}, got: ${Type.ppBaseType(baseType2)}", term.exp3.origin)
+                      model.reportError(s"Multiplicities are not compatible: $m <-> $m2", term.exp3.origin)
                     }
-                  case otherwise => model.reportError(s"Expected type with multiplicity, got: ${Type.ppType(otherwise)}", term.exp3.origin)
-                }
-              case t => model.reportError("Field type should be a type with multiplicity", term.optionaltype2.origin)
-            }
+                  } else{
+                    model.reportError(s"Expected base type ${Type.ppBaseType(baseType)}, got: ${Type.ppBaseType(baseType2)}", term.exp3.origin)
+                  }
+                case otherwise => model.reportError(s"Expected type with multiplicity, got: ${Type.ppType(otherwise)}", term.exp3.origin)
+              }
+            case t => model.reportError("Field type should be a type with multiplicity", term.optionaltype2.origin)
           }
         }
       }
-      case _ => model
     }
+    case _ => model
   }
 }

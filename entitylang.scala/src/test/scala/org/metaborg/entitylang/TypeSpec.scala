@@ -57,6 +57,10 @@ class TypeSpec extends FlatSpec{
         |  d = a + 1
         |  e = if(c) a else b
         |  f = !c
+        |
+        |
+        |  x: Int?
+        |  y = x <+ null
         |}
       """.stripMargin
     val ast = EntityLangParserProvider.parser.parse(program)
@@ -69,6 +73,7 @@ class TypeSpec extends FlatSpec{
     fieldAssert("A", "d")(int.one)
     fieldAssert("A", "e")(int.one)
     fieldAssert("A", "f")(boolean.one)
+//    fieldAssert("A", "y")(int.?)
   }
 
   it should "typecheck with multiple entities" in {
@@ -112,6 +117,13 @@ class TypeSpec extends FlatSpec{
         |  value: Float = sum(children.value) + amount * weight
         |}
         |
+        |entity B {
+        |  a: Int = b
+        |  b = c + d
+        |  c: Int = d
+        |  d = a
+        |}
+        |
         |relation A.parent 1 <-> * A.children
       """.stripMargin
     val fieldAssert = createFieldAssert(program)
@@ -119,7 +131,11 @@ class TypeSpec extends FlatSpec{
     fieldAssert("A", "weight")(float.one)
     fieldAssert("A", "value")(float.one)
     fieldAssert("A", "children")(EntityType("A") withMultiplicity zeroToMany)
-//    fieldAssert("A", "childValue")(float.*)
+
+    fieldAssert("B", "a")(int.one)
+    fieldAssert("B", "b")(int.one)
+    fieldAssert("B", "c")(int.one)
+    fieldAssert("B", "d")(int.one)
   }
 
   def createFieldAssert(program: String): (String, String) => (Type) => Assertion = {

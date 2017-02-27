@@ -14,10 +14,9 @@
   
   entity Enrollment {
     name       : String  = course.name + " " +student.name + 1
-    
     grade      : Float?
     pass       : Boolean = grade >= 5.5 <+ false
-    pass2      : Int     = if(pass) 1 else 0
+    pass2      = if(pass) 1 else 0
   }
   
   relation Course.enrollments *  <-> 1 Enrollment.course

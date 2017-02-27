@@ -45,11 +45,13 @@ package object typingrule {
 
   def lub(o: HasOrigin, t1: MultiplicityType[BaseType], t2: MultiplicityType[BaseType])(implicit typeSystem: TypeSystem[SExp, Type], ord: Ordering[NumericType]): TypingRule.Aux[SExp, Type, MultiplicityType[BaseType]] = {
     for {
-      baseType <- (t1.baseType, t2.baseType) match{
-        case (n1: NumericType, n2: NumericType) => typeRule.success[BaseType](ord.max(n1, n2))
-        case (b1, b2) if b1 == b2 => typeRule.success[BaseType](b1)
-        case (b1, b2) => typeRule.fail[BaseType](o, s"incompatible base types: ${Type.ppBaseType(b1)} != ${Type.ppBaseType(b2)}")
-      }
+      baseType <-
+        if(BaseType.partialOrdering.gteq(t1.baseType, t2.baseType))
+          typeRule.success[BaseType](t1.baseType)
+        else if(BaseType.partialOrdering.gteq(t2.baseType, t1.baseType))
+          typeRule.success[BaseType](t2.baseType)
+        else
+          typeRule.fail[BaseType](o, s"incompatible base types: ${Type.ppBaseType(t1.baseType)} <-> ${Type.ppBaseType(t2.baseType)}")
       multiplicity <- lubMultiplicity(o, t1.multiplicity, t2.multiplicity)
     } yield MultiplicityType(baseType, multiplicity)
   }
