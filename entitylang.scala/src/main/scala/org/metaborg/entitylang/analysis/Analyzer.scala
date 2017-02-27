@@ -143,15 +143,13 @@ object Analyzer {
               if(typeNow.isEmpty && typeLater.nonEmpty){
                 typeLater.foldLeft(model){ case (model, n) => model.reportError(s"Could not resolve cyclic dependency", n.term.origin)}
               } else{
-                val model2 = typeNow.foldLeft(model){
-                  case (model, n) => inferFieldType(model, n)
-                }
-
+                val model2 = typeNow.foldLeft(model)(inferFieldType)
                 resolve(model2, typed ++ typeNow, typeLater)
               }
             }
           }
-          resolve(model, typed, untyped)
+          val model2 = resolve(model, typed, untyped)
+          typed.foldLeft(model2)(inferFieldType)
         }
         case Right(node) => inferFieldType(model, node)
       }

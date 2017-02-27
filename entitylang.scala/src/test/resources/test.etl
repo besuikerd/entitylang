@@ -14,14 +14,20 @@ entity Assignment{
 entity Submission{
   grade: Float?
   pass: Boolean = grade >= assignment.minimum && childPass <+ false
-  childPass: Boolean = conj(children.pass)
-  
+  childPass = conj(children.pass)
   
   x = if(true) 5 else 5.0
   
   average = avg(children.grade)
 
   q = assignment
+  
+  y: Int?
+  
+  bla = null
+  
+  z = y <+ null
+ 
 
   pass2 = pass || average > 5.5
 }

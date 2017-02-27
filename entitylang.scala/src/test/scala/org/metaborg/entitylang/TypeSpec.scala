@@ -48,19 +48,22 @@ class TypeSpec extends FlatSpec{
   }
 
   "Multiplicity bounds" should "have a correct partial ordering" in {
+    assertResult(zeroToMany)(MultiplicityBounds.lub(zeroToMany, zeroToMany))
+    assertResult(oneToMany)(MultiplicityBounds.lub(oneToMany, oneToMany))
+    assertResult(zeroToOne)(MultiplicityBounds.lub(zeroToOne, zeroToOne))
+    assertResult(oneToOne)(MultiplicityBounds.lub(oneToOne, oneToOne))
+    assertResult(zeroToZero)(MultiplicityBounds.lub(zeroToZero, zeroToZero))
 
-    assert(zeroToMany > oneToMany)
-    assert(zeroToMany > zeroToOne)
-    assert(zeroToMany > oneToOne)
-    assert(zeroToMany > zeroToZero)
-
-    assert(oneToMany > oneToOne)
-
-    assert(zeroToOne > oneToOne)
-    assert(zeroToOne > zeroToZero)
-
-
-
+    assertResult(zeroToMany)(MultiplicityBounds.lub(zeroToMany, oneToMany))
+    assertResult(zeroToMany)(MultiplicityBounds.lub(zeroToMany, zeroToOne))
+    assertResult(zeroToMany)(MultiplicityBounds.lub(zeroToMany, oneToOne))
+    assertResult(zeroToMany)(MultiplicityBounds.lub(zeroToMany, zeroToZero))
+    assertResult(zeroToMany)(MultiplicityBounds.lub(oneToMany, zeroToOne))
+    assertResult(oneToMany)(MultiplicityBounds.lub(oneToMany, oneToOne))
+    assertResult(zeroToMany)(MultiplicityBounds.lub(oneToMany, zeroToZero))
+    assertResult(zeroToOne)(MultiplicityBounds.lub(zeroToOne, oneToOne))
+    assertResult(zeroToOne)(MultiplicityBounds.lub(zeroToOne, zeroToZero))
+    assertResult(zeroToOne)(MultiplicityBounds.lub(oneToOne, zeroToZero))
   }
 
   "Entities" should "typecheck with single entity" in {
@@ -73,10 +76,6 @@ class TypeSpec extends FlatSpec{
         |  d = a + 1
         |  e = if(c) a else b
         |  f = !c
-        |
-        |
-        |  x: Int?
-        |  y = x <+ null
         |}
       """.stripMargin
     val fieldAssert = createFieldAssert(program)
@@ -87,7 +86,6 @@ class TypeSpec extends FlatSpec{
     fieldAssert("A", "d")(int.one)
     fieldAssert("A", "e")(int.one)
     fieldAssert("A", "f")(boolean.one)
-    fieldAssert("A", "y")(int.?)
   }
 
   it should "typecheck with multiple entities" in {

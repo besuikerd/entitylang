@@ -9,6 +9,45 @@ sealed trait MultiplicityBounds extends Bounded[Multiplicity] with PartiallyOrde
   override def toString: String = s"[${lowerBound.symbol}, ${upperBound.symbol}]"
 }
 
+object MultiplicityBounds{
+
+  val zeroToZero = ExactlyZero()
+  val oneToOne = ExactlyOne()
+  val zeroToOne = ZeroOrOne()
+  val oneToMany = OneOrMore()
+  val zeroToMany = ZeroOrMore()
+
+
+  import scalax.collection.GraphPredef._
+  import scalax.collection.GraphEdge.DiEdge
+  import scalax.collection.Graph
+
+  val graph = Graph[MultiplicityBounds, DiEdge](
+    oneToOne ~> zeroToOne,
+    oneToOne ~> oneToMany,
+    zeroToZero ~> zeroToOne,
+    oneToMany ~> zeroToMany,
+    zeroToOne ~> zeroToMany
+  )
+
+  def lub(m1: MultiplicityBounds, m2: MultiplicityBounds): MultiplicityBounds = {
+    val n1 = graph.get(m1)
+    val n2 = graph.get(m2)
+
+
+    if(m1 == m2)
+      m1
+    else if(n1.hasSuccessor(n2))
+      m2
+    else if(n2.hasSuccessor(n1))
+      m1
+    else
+      n1.findSuccessor{n3 =>
+        n3.hasPredecessor(n2)
+      }.map(_.value).get
+  }
+}
+
 case class ExactlyZero() extends MultiplicityBounds{
   override val lowerBound: Multiplicity = zero
   override val upperBound: Multiplicity = zero

@@ -170,7 +170,7 @@ object ExpressionTypeSystem extends FancyTypeSystem[SExp, Type]{
             multiplicityType[BaseType](e2)
           )
         t3 <- lub(e2, t1, t2)
-      } yield t3
+      } yield t2
 
       //      case Merge =>
       case _ => typeRule.fail(term, op + " not implemented yet")
@@ -200,10 +200,7 @@ object ExpressionTypeSystem extends FancyTypeSystem[SExp, Type]{
       for {
         MultiplicityType(EntityType(name), multiplicity) <- entity(e)
         MultiplicityType(baseType, multiplicity2) <- typeRule.fromTypeEnvironment(id, s"$name.${id.string}").ofType[MultiplicityType[BaseType]]
-        t2 <- multiplicity.tryCompare(multiplicity2) match {
-          case Some(n) => typeRule.success[Type](MultiplicityType(baseType, if (n > 0) multiplicity2 else multiplicity))
-          case None => typeRule.fail[Type](id, "field can not have a valid multiplicity")
-        }
-      } yield t2
+        m <- lubMultiplicity(id, multiplicity, multiplicity2)
+      } yield MultiplicityType(baseType, m)
   })
 }
