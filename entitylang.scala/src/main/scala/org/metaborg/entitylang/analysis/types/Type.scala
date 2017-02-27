@@ -15,8 +15,8 @@ object BaseType{
         case (x: NumericType, y: NumericType) =>
           NumericType.numericOrdering.tryCompare(x, y)
         case (x: AnyType, y: AnyType) => Some(0)
-        case (x: AnyType, y) => Some(1)
-        case (x, y: AnyType) => Some(-1)
+        case (x: AnyType, y) => Some(-1)
+        case (x, y: AnyType) => Some(1)
         case (x, y) if x == y => Some(0)
         case _ => None
       }

@@ -151,29 +151,8 @@ object Analyzer {
               }
             }
           }
-
           resolve(model, typed, untyped)
-
-
-//          //arrange the cycle so that a known type is at the head of the cycle
-//          val ordered = cycle.reorderCyclic { node =>
-//            val d = model.fields(node.value.asInstanceOf[EntityFieldNode])
-//            d.fieldType != TopType()
-//          }
-//
-//          ordered match{
-//            case Some(order) =>
-//              order.foldLeft(model)(inferFieldType)
-//
-//            //no order found; types cannot be inferred
-//            case None => cycle.foldLeft(model){
-//              case (model, field) =>
-//                val fieldData = model.fields(field.value.asInstanceOf[EntityFieldNode])
-//                model.reportError("Cycle in found in derived values; type could not be inferred", fieldData.term.origin)
-//            }
-//          }
         }
-
         case Right(node) => inferFieldType(model, node)
       }
     }

@@ -58,7 +58,7 @@ package object typingrule {
 
   def lubMultiplicity(o: HasOrigin, m1: MultiplicityBounds, m2: MultiplicityBounds)(implicit typeSystem: TypeSystem[SExp, Type]): TermTypingRule[SExp, Type, MultiplicityBounds] =
     (m1.tryCompare(m2) match{
-      case Some(i) => typeRule(typeSystem).success(if(i > 0) m2 else m1)
+      case Some(i) => typeRule(typeSystem).success(if(i > 0) m1 else m2)
       case None => typeRule.fail[MultiplicityBounds](o, s"incompatible multiplicity bounds: $m1 <-> $m2")
     }).bindTerm(o)
 

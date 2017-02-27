@@ -170,7 +170,7 @@ object ExpressionTypeSystem extends FancyTypeSystem[SExp, Type]{
             multiplicityType[BaseType](e2)
           )
         t3 <- lub(e2, t1, t2)
-      } yield t2
+      } yield t3
 
       //      case Merge =>
       case _ => typeRule.fail(term, op + " not implemented yet")
@@ -187,19 +187,6 @@ object ExpressionTypeSystem extends FancyTypeSystem[SExp, Type]{
         case _ => typeRule.fail(e1, "expected an identifier")
       }
   })
-
-//  def apply2: Rule = implicit typeSystem => {
-//    case a@Apply2(e1, args, _) =>
-//      args.value.foldLeft[TermTypingRule[SExp, Type, Type]](e1.infer) {
-//        case (acc, current) =>
-//          val x = for {
-//            f <- acc.ofType[FunctionType]("FunctionType")
-//            t1 <- current.infer
-//            t2 <- if (t1 != f.t1) rule.mismatchedType(current, f.t1, t1) else rule.success(f.t2)
-//          } yield t2
-//          x.bindTerm(current)
-//      }
-//    }
 
   rule[Ref1](implicit typeSystem => {
     case r @ Ref1(id1, _) =>

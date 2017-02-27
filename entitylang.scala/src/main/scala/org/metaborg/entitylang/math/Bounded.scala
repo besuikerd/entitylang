@@ -10,11 +10,11 @@ class PartialOrderingBounded[T](ordering: Ordering[T]) extends PartialOrdering[B
     if(ordering.eq(x.lowerBound, y.lowerBound) && ordering.eq(x.upperBound, y.upperBound))
       Some(0)
     else if(ordering.gteq(x.lowerBound, y.lowerBound) && ordering.lteq(x.upperBound, y.upperBound))
-      Some(1)
-    else if(ordering.gteq(y.lowerBound, x.lowerBound) && ordering.lteq(y.upperBound, x.upperBound))
       Some(-1)
+    else if(ordering.gteq(y.lowerBound, x.lowerBound) && ordering.lteq(y.upperBound, x.upperBound))
+      Some(1)
     else
       None
 
-  override def lteq(x: Bounded[T], y: Bounded[T]): Boolean = tryCompare(x, y).exists(_ >= 0)
+  override def lteq(x: Bounded[T], y: Bounded[T]): Boolean = tryCompare(x, y).exists(_ <= 0)
 }

@@ -47,6 +47,22 @@ class TypeSpec extends FlatSpec{
     scc.foreach(println)
   }
 
+  "Multiplicity bounds" should "have a correct partial ordering" in {
+
+    assert(zeroToMany > oneToMany)
+    assert(zeroToMany > zeroToOne)
+    assert(zeroToMany > oneToOne)
+    assert(zeroToMany > zeroToZero)
+
+    assert(oneToMany > oneToOne)
+
+    assert(zeroToOne > oneToOne)
+    assert(zeroToOne > zeroToZero)
+
+
+
+  }
+
   "Entities" should "typecheck with single entity" in {
     val program =
       """
@@ -63,9 +79,7 @@ class TypeSpec extends FlatSpec{
         |  y = x <+ null
         |}
       """.stripMargin
-    val ast = EntityLangParserProvider.parser.parse(program)
-    val model = Analyzer.analyze(ast)
-    val fieldAssert = assertFieldType(model) _
+    val fieldAssert = createFieldAssert(program)
 
     fieldAssert("A", "a")(int.one)
     fieldAssert("A", "b")(int.one)
@@ -73,7 +87,7 @@ class TypeSpec extends FlatSpec{
     fieldAssert("A", "d")(int.one)
     fieldAssert("A", "e")(int.one)
     fieldAssert("A", "f")(boolean.one)
-//    fieldAssert("A", "y")(int.?)
+    fieldAssert("A", "y")(int.?)
   }
 
   it should "typecheck with multiple entities" in {
