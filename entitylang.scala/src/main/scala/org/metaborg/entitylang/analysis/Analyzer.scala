@@ -11,6 +11,7 @@ import org.metaborg.entitylang.lang.ast.MModel.SAttributeRef.AttributeRef1
 import org.metaborg.entitylang.lang.ast.MModel.SEntityRef.EntityRef1
 import org.metaborg.entitylang.lang.ast.MModel.SModel.{Entity2, Relation6}
 import org.metaborg.entitylang.lang.ast.Mentitylang.SStart.Start1
+import org.metaborg.entitylang.util.profiler.Profiler
 import org.slf4j.LoggerFactory
 
 import scalax.collection.GraphPredef._
@@ -20,10 +21,16 @@ object Analyzer {
 
   def analyze(ast: Start1): AnalysisModel = {
     val time = System.currentTimeMillis()
+
+    val profiler = Profiler()
+    profiler.start()
     val pass1 = collectDefinitions(ast)
+    logger.info(s"collectDefinitions took ${profiler.getAndTick()}ms")
     val pass2 = collectDerivedValueDependencies(pass1)
+    logger.info(s"collectDerivedValueDependencies took ${profiler.getAndTick()}ms")
     val pass3 = deriveTypes(pass2)
-    logger.info("took me " + (System.currentTimeMillis() - time) + "ms" )
+    logger.info(s"deriveTypes took ${profiler.getAndTick()}ms")
+    logger.info(s"type checker took ${profiler.total()}ms" )
     if(pass3.errors.nonEmpty){
       logger.warn("found the following errors:")
       pass3.errors.sortWith((e1, e2) => e1.origin.line < e2.origin.line || e1.origin.line == e2.origin.line && e1.origin.column < e2.origin.column).foreach(e => logger.warn(GeneralTypeError(e.origin, e.message).errorString))
