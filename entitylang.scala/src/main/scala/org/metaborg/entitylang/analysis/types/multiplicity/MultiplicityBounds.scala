@@ -46,6 +46,18 @@ object MultiplicityBounds{
         n3.hasPredecessor(n2)
       }.map(_.value).get
   }
+
+  /**
+    * upgrades the given bounds to have at least a single element as the lower bound. Upper bound remains unmodified,
+    * unless upper bound is equal to zero
+    */
+  def nonZero(m: MultiplicityBounds): MultiplicityBounds = m match {
+    case ExactlyZero() => oneToOne
+    case ZeroOrOne() => oneToOne
+    case ExactlyOne() => oneToOne
+    case ZeroOrMore() => oneToMany
+    case OneOrMore() => oneToMany
+  }
 }
 
 case class ExactlyZero() extends MultiplicityBounds{

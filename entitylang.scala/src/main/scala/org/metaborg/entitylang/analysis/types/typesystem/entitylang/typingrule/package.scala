@@ -64,7 +64,9 @@ package object typingrule {
     typeRule.success(o, MultiplicityBounds.lub(m1, m2))
 
   def maybeEmpty[T <: BaseType : ClassTag](e: SExp)(implicit typeSystem: TypeSystem[SExp, Type]): TermTypingRule[SExp, Type, MultiplicityType[T]] =
-    multiplicityType[T](e, "Any").filter(_.multiplicity.lowerBound == Multiplicity.zero , t => "type should be able to inhabit no instances")
+    multiplicityType[T](e, "Any")
+      .filter(_.multiplicity.lowerBound == Multiplicity.zero , t => "type should be able to inhabit no instances")
+      .map(t => MultiplicityType(t.baseType, MultiplicityBounds.nonZero(t.multiplicity)))
 
   def maybeEmpty[T <: BaseType](baseType: T, e: SExp)(implicit typeSystem: TypeSystem[SExp, Type]): TermTypingRule[SExp, Type, MultiplicityType[BaseType]] =
     multiplicityType[BaseType](baseType, e).filter(_.multiplicity.lowerBound == Multiplicity.zero , t => "type should be able to inhabit no instances")

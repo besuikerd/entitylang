@@ -170,7 +170,7 @@ object ExpressionTypeSystem extends FancyTypeSystem[SExp, Type]{
             multiplicityType[BaseType](e2)
           )
         t3 <- lub(e2, t1, t2)
-      } yield t2
+      } yield t3
 
       //      case Merge =>
       case _ => typeRule.fail(term, op + " not implemented yet")
