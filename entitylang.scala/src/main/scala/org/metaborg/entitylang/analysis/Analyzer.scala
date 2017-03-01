@@ -127,7 +127,7 @@ object Analyzer {
       case literal: SLiteral => (entityNode, Seq.empty)
     }
 
-    model.graph.derivedValues.foldLeft(model) { case (model, node) =>
+    val edges = model.graph.derivedValues.par.map(node => {
       val targets = for {
         derivedValueNode <- node.optTypedValue[DerivedValueNode]
         derivedValueData@DerivedValueNodeData(_, _, _) <- model.fields.get(derivedValueNode)
@@ -136,11 +136,10 @@ object Analyzer {
         walk(model, entityNode.typedValue[EntityNode], derivedValueData.term.exp3)._2
       }
 
-      val graph2 = targets.toSeq.flatten[AnalysisNode].foldLeft(model.graph) { case (graph, targetNode) => graph + (node.value ~> targetNode.value) }
-      model.copy(
-        graph = graph2
-      )
-    }
+      targets.toSeq.flatten[AnalysisNode].map(target => node.value ~> target.value)
+
+    }).reduce(_ ++ _)
+    model.copy(graph = model.graph ++ edges)
   }
 
   def deriveTypes(model: AnalysisModel): AnalysisModel = {
