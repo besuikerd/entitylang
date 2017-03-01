@@ -1,5 +1,5 @@
 entity Income {
-    name                : String  = "Untitled"
+    name                : String
     monthlySalary       : Float
     holidayAllowance    : Float   = 8.0
     thirteenthMonth     : Boolean = false
@@ -28,10 +28,10 @@ entity Income {
         2242 
       else if(taxableIncome < 66417) 
         2242.0 - 0.04822 * (taxableIncome - 19922.0) 
-      else 
+      else
         0
     employedTaxDiscount =
-      if(taxableIncome < 9147) 
+      if(taxableIncome < 9147)
         0.0193 * taxableIncome
       else if(taxableIncome < 19758.0)
         146.0 + 0.27698 * (taxableIncome - 9147.0)

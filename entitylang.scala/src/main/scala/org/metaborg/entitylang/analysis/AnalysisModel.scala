@@ -24,6 +24,18 @@ case class AnalysisModel(
     case (k, v) if k.entity == entity && k.name == field => v.fieldType
   }
 
+
+  def verifyUniqueField(field: EntityFieldNodeData): AnalysisModel = {
+    fields.get(field.node) match{
+      case Some(field2) =>
+        val errorMessage = s"Duplicate definition of ${field.node.entity}.${field.node.name}"
+        reportError(errorMessage, field.nameTerm.origin)
+          .reportError(errorMessage, field2.nameTerm.origin)
+      case None =>
+        this
+    }
+  }
+
   def reportError(message: String, origin: Origin): AnalysisModel = copy(errors = EditorMessage(message, origin) +: errors)
 }
 

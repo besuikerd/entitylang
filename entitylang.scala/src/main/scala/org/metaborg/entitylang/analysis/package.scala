@@ -6,12 +6,13 @@ import org.metaborg.entitylang.lang.ast.MModel.SAttributeRef.AttributeRef1
 import org.metaborg.entitylang.lang.ast.MModel.SEntityRef.EntityRef1
 import org.metaborg.entitylang.lang.ast.MModel.SModel.{Entity2, Relation6}
 import org.metaborg.entitylang.lang.ast.MType.SMultiplicity
+import org.metaborg.scalaterms.sdf.Lexical
 import org.metaborg.scalaterms.{HasOrigin, TermLike}
 
 import scalax.collection.{Graph, GraphEdge}
 
 package object analysis {
-  type AnalysisEdgeType[T] = GraphEdge.UnDiEdge[T]
+  type AnalysisEdgeType[T] = GraphEdge.DiEdge[T]
   type AnalysisGraph = Graph[AnalysisGraphNode, AnalysisEdgeType]
   type AnalysisNode = AnalysisGraph#NodeT
   type AnalysisEdge = AnalysisGraph#EdgeT
@@ -34,6 +35,8 @@ package object analysis {
     val fieldType: Type
     val node: EntityFieldNode
     val term: TermType
+
+    val nameTerm: TermLike with HasOrigin
   }
 
   object EntityFieldNodeData{
@@ -43,11 +46,74 @@ package object analysis {
   }
 
   case class DerivedValueNode(entity: String, name: String) extends EntityFieldNode
-  case class DerivedValueNodeData(fieldType: Type, node: EntityFieldNode, term: DerivedAttribute3) extends EntityFieldNodeData.Aux[DerivedAttribute3]
+  case class DerivedValueNodeData(fieldType: Type, node: EntityFieldNode, term: DerivedAttribute3) extends EntityFieldNodeData.Aux[DerivedAttribute3]{
+    override val nameTerm: Lexical = term.id1
+  }
 
   case class AttributeNode(entity: String, name: String) extends EntityFieldNode
-  case class AttributeNodeData(fieldType : Type, node: EntityFieldNode, term: Attribute2) extends EntityFieldNodeData.Aux[Attribute2]
+  case class AttributeNodeData(fieldType : Type, node: EntityFieldNode, term: Attribute2) extends EntityFieldNodeData.Aux[Attribute2]{
+    override val nameTerm: TermLike with HasOrigin = term.id1
+  }
 
   case class RelationNode(entity: String, name: String) extends EntityFieldNode
-  case class RelationNodeData(fieldType: MultiplicityType[EntityType], entityRef: EntityRef1, attributeRef: AttributeRef1, multiplicity: SMultiplicity, node: EntityFieldNode, term: Relation6) extends EntityFieldNodeData.Aux[Relation6]
+  case class RelationNodeData(fieldType: MultiplicityType[EntityType], entityRef: EntityRef1, attributeRef: AttributeRef1, multiplicity: SMultiplicity, node: EntityFieldNode, term: Relation6) extends EntityFieldNodeData.Aux[Relation6]{
+    override val nameTerm: TermLike with HasOrigin = attributeRef
+  }
+
+  import scalax.collection.GraphEdge.DiEdge
+  def mutableSCC[V, E[V] <: DiEdge[V]](graph: Graph[V, E]): Seq[Either[Seq[Graph[V, E]#NodeT], Graph[V, E]#NodeT]] = {
+    import scala.collection.mutable.ListBuffer
+    class Vector(var node: Graph[V, E]#NodeT, var index: Int, var lowLink: Int, var onStack: Boolean){
+      override def toString: String = node.toString()
+    }
+
+    val undefined = -1
+    var index = 0
+    val s = ListBuffer.empty[Vector]
+    var sccs = Seq.empty[Seq[Graph[V, E]#NodeT]]
+    val vectors = graph.nodes.map(n => new Vector(n, undefined, undefined, false))
+    val adjecencyList = vectors.map(v => v -> v.node.outgoing.map(e => vectors.find(_.node == e.to).get)).toMap
+
+    vectors.foreach{v =>
+      if(v.index == -1){
+        strongConnect(v)
+      }
+    }
+
+    def strongConnect(v: Vector){
+      v.index = index
+      v.lowLink = index
+      index = index + 1
+      v +=: s
+      v.onStack = true
+
+      for(w <- adjecencyList(v)){
+        if(w.index == undefined){
+          strongConnect(w)
+          v.lowLink = Math.min(v.lowLink, w.lowLink)
+        } else if(w.onStack){
+          v.lowLink = Math.min(v.lowLink, w.index)
+        }
+      }
+
+      if(v.lowLink == v.index){
+        var scc = Seq.empty[Graph[V, E]#NodeT]
+
+        var w: Vector = null
+        do {
+          w = s.remove(0)
+          w.onStack = false
+          scc = scc ++ Seq(w.node)
+        } while(w != v)
+        sccs = sccs :+ scc
+      }
+    }
+    ///resolve cycles of length 1
+    sccs.map(scc => if(scc.length == 1){
+      val v = scc.head
+      v.outgoing.find(e => e.to == v).map(_ => Left(Seq(v))).getOrElse(Right(v))
+    } else {
+      Left(scc)
+    })
+  }
 }

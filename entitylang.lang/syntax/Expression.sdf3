@@ -40,9 +40,9 @@ context-free syntax
   Literal.String = STRING
   Literal.True = <true>
   Literal.False = <false>
-  
+  Literal.Null = <null>
+
   Exp.Ref = ID
-  Exp.Null = <null>
   
 context-free priorities
 

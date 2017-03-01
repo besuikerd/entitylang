@@ -22,6 +22,7 @@ object MExpression {
         case String1.fromSTerm(literal1) => scala.Some(literal1)
         case True0.fromSTerm(literal1) => scala.Some(literal1)
         case False0.fromSTerm(literal1) => scala.Some(literal1)
+        case Null0.fromSTerm(literal1) => scala.Some(literal1)
         case _ => scala.None
       }
     }
@@ -86,6 +87,18 @@ object MExpression {
         }
       }
     }
+    case class Null0(origin: scalaterms.Origin) extends SLiteral {
+      override def toSTerm = STerm.Cons("Null", scala.Seq(), scala.Some(origin))
+    }
+    object Null0 extends scalaterms.TermLikeCompanion[Null0] {
+      override val fromSTerm: scalaterms.FromSTerm[Null0] = new scalaterms.FromSTerm[Null0] {
+        override def unapply(term: STerm): Option[Null0] = term match {
+          case STerm.Cons("Null", scala.Seq(), scala.Some(origin)) =>
+            scala.Some(Null0(origin))
+          case _ => None
+        }
+      }
+    }
   }
   object SExp extends scalaterms.TermLikeCompanion[SExp] {
     override val fromSTerm: scalaterms.FromSTerm[SExp] = new scalaterms.FromSTerm[SExp] {
@@ -110,7 +123,6 @@ object MExpression {
         case ChoiceLeft2.fromSTerm(exp1) => scala.Some(exp1)
         case Apply2.fromSTerm(exp1) => scala.Some(exp1)
         case Ref1.fromSTerm(exp1) => scala.Some(exp1)
-        case Null0.fromSTerm(exp1) => scala.Some(exp1)
         case SLiteral.fromSTerm(_1) => scala.Some(_1)
         case _ => scala.None
       }
@@ -352,18 +364,6 @@ object MExpression {
         override def unapply(term: STerm): Option[Ref1] = term match {
           case STerm.Cons("Ref", scala.Seq(SID.fromSTerm(id1)), scala.Some(origin)) =>
             scala.Some(Ref1(id1, origin))
-          case _ => None
-        }
-      }
-    }
-    case class Null0(origin: scalaterms.Origin) extends SExp {
-      override def toSTerm = STerm.Cons("Null", scala.Seq(), scala.Some(origin))
-    }
-    object Null0 extends scalaterms.TermLikeCompanion[Null0] {
-      override val fromSTerm: scalaterms.FromSTerm[Null0] = new scalaterms.FromSTerm[Null0] {
-        override def unapply(term: STerm): Option[Null0] = term match {
-          case STerm.Cons("Null", scala.Seq(), scala.Some(origin)) =>
-            scala.Some(Null0(origin))
           case _ => None
         }
       }

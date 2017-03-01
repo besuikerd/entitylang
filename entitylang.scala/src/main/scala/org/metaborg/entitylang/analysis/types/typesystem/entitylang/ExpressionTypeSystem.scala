@@ -7,7 +7,7 @@ import org.metaborg.entitylang.analysis.types.typesystem.entitylang.typingrule._
 import org.metaborg.entitylang.analysis.types.typesystem.typingrule.{AlternativeTypingRule, TypingRule}
 import org.metaborg.entitylang.desugar._
 import org.metaborg.entitylang.lang.ast.MExpression.SExp
-import org.metaborg.entitylang.lang.ast.MExpression.SExp.{Apply2, If3, MemberAccess2, Ref1, Null0}
+import org.metaborg.entitylang.lang.ast.MExpression.SExp.{Apply2, If3, MemberAccess2, Ref1}
 import org.metaborg.entitylang.lang.ast.MExpression.SLiteral._
 import org.metaborg.scalaterms.HasOrigin
 

@@ -1,6 +1,11 @@
 package org.metaborg.entitylang.analysis
 
+import scala.collection.immutable.ListMap
+import scala.collection.mutable.ListBuffer
 import scala.reflect.{ClassTag, classTag}
+import scalax.collection.Graph
+import scalax.collection.GraphEdge.DiEdge
+import scalax.collection.GraphPredef.EdgeLikeIn
 import scalax.collection.GraphTraversal.DepthFirst
 
 
@@ -28,7 +33,7 @@ class RichAnalysisGraph(val graph: AnalysisGraph) extends AnyVal {
     * @return sequence of components; either a cycle or a single node
     */
   def stronglyConnectedComponents: Seq[Either[Seq[AnalysisNode], AnalysisNode]] = {
-    type SCSS = scala.collection.mutable.Map[AnalysisNode, AnalysisNode]
+    type SCSS = scala.collection.immutable.Map[AnalysisNode, AnalysisNode]
     def dfs(node: AnalysisNode, path: Map[AnalysisNode, Int], scss: SCSS): SCSS = {
 
       def shallowerNode(old: AnalysisNode, candidate: AnalysisNode): AnalysisNode =
@@ -52,11 +57,12 @@ class RichAnalysisGraph(val graph: AnalysisGraph) extends AnyVal {
       scss2 + (node -> shallowestBackNode)
     }
 
-    val scss = graph.entityFields.foldLeft[SCSS](scala.collection.mutable.LinkedHashMap.empty){ case (scss, n) =>
+    //TODO ListMap is rather inefficient, but insertion order needs to be preserved
+    val scss = graph.entityFields.foldLeft[SCSS](ListMap.empty){ case (scss, n) =>
       if(scss.contains(n)){
         scss
       } else {
-        dfs(n, Map.empty, scss)
+        dfs(n, ListMap.empty, scss)
       }
     }
     val representatives = scss.values.toList.distinct
