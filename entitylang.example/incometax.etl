@@ -16,10 +16,10 @@ entity Income {
     taxBracket3         = 66421.0
     taxRate3            = 40.15 / 100.0
     taxRate4            = 52.0 / 100.0
-    salaryBracket1      = min(taxableIncome + taxBracket1)
-    salaryBracket2      = max(min(taxableIncome + taxBracket2) - taxBracket1)
-    salaryBracket3      = max(0.0 + min(taxableIncome + taxBracket3) - taxBracket2)
-    salaryBracket4      = max(taxableIncome - taxBracket3)
+    salaryBracket1      = min(taxableIncome ++ taxBracket1)
+    salaryBracket2      = max(0.0 ++ min(taxableIncome ++ taxBracket2) - taxBracket1)
+    salaryBracket3      = max(0.0 ++ min(taxableIncome ++ taxBracket3) - taxBracket2)
+    salaryBracket4      = max(0.0 ++ taxableIncome - taxBracket3)
     incomeTax           =
       salaryBracket1 * taxRate1 + salaryBracket2 * taxRate2 + salaryBracket3 * taxRate3 +
       salaryBracket4 * taxRate4

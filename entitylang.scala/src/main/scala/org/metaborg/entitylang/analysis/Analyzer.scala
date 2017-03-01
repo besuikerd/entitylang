@@ -19,9 +19,11 @@ object Analyzer {
   val logger = LoggerFactory.getLogger(getClass)
 
   def analyze(ast: Start1): AnalysisModel = {
+    val time = System.currentTimeMillis()
     val pass1 = collectDefinitions(ast)
     val pass2 = collectDerivedValueDependencies(pass1)
     val pass3 = deriveTypes(pass2)
+    logger.info("took me " + (System.currentTimeMillis() - time) + "ms" )
     if(pass3.errors.nonEmpty){
       logger.warn("found the following errors:")
       pass3.errors.sortWith((e1, e2) => e1.origin.line < e2.origin.line || e1.origin.line == e2.origin.line && e1.origin.column < e2.origin.column).foreach(e => logger.warn(GeneralTypeError(e.origin, e.message).errorString))
