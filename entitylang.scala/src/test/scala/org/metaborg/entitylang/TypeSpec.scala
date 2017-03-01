@@ -151,6 +151,23 @@ class TypeSpec extends FlatSpec{
     fieldAssert("B", "d")(int.one)
   }
 
+  "ChoiceLeft" should "infer correct types" in {
+    val program =
+      """
+        |entity A {
+        |  a: Int?
+        |  b = a <+ 5
+        |  c = a <+ null
+        |  d = c <+ b
+        |}
+      """.stripMargin
+    val fieldAssert = createFieldAssert(program)
+    fieldAssert("A", "a")(int.?)
+    fieldAssert("A", "b")(int.one)
+    fieldAssert("A", "c")(int.?)
+    fieldAssert("A", "d")(int.one)
+  }
+
   def createFieldAssert(program: String): (String, String) => (Type) => Assertion = {
     val ast = EntityLangParserProvider.parser.parse(program)
     val model = Analyzer.analyze(ast)
@@ -197,7 +214,6 @@ class TypeSpec extends FlatSpec{
 
     assertType("max(2)")(int.one)
     illTyped("f(true)")
-
   }
 
   def inferType(exp: SExp): TypingRule.Aux[SExp, Type, Type]#TypingResult =
