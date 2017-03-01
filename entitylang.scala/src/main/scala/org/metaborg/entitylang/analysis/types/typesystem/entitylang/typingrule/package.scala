@@ -45,16 +45,25 @@ package object typingrule {
 
   def lub(o: HasOrigin, t1: MultiplicityType[BaseType], t2: MultiplicityType[BaseType])(implicit typeSystem: TypeSystem[SExp, Type], ord: Ordering[NumericType]): TypingRule.Aux[SExp, Type, MultiplicityType[BaseType]] = {
     for {
-      baseType <-
-        if(BaseType.partialOrdering.gteq(t1.baseType, t2.baseType))
-          typeRule.success[BaseType](t1.baseType)
-        else if(BaseType.partialOrdering.gteq(t2.baseType, t1.baseType))
-          typeRule.success[BaseType](t2.baseType)
-        else
-          typeRule.fail[BaseType](o, s"incompatible base types: ${Type.ppBaseType(t1.baseType)} <-> ${Type.ppBaseType(t2.baseType)}")
+      baseType <- lubBaseType(o, t1.baseType, t2.baseType)
       multiplicity <- lubMultiplicity(o, t1.multiplicity, t2.multiplicity)
     } yield MultiplicityType(baseType, multiplicity)
   }
+
+  def merge(o: HasOrigin, t1: MultiplicityType[BaseType], t2: MultiplicityType[BaseType])(implicit typeSystem: TypeSystem[SExp, Type]): TermTypingRule[SExp, Type, MultiplicityType[BaseType]] = {
+    for{
+      baseType <- lubBaseType(o, t1.baseType, t2.baseType)
+      multiplicity = MultiplicityBounds.merge(t1.multiplicity, t2.multiplicity)
+    } yield MultiplicityType(baseType, multiplicity)
+  }
+
+  def lubBaseType(o: HasOrigin, t1: BaseType, t2: BaseType)(implicit typeSystem: TypeSystem[SExp, Type]): TermTypingRule[SExp, Type, BaseType] =
+    if(BaseType.partialOrdering.gteq(t1, t2))
+      typeRule.success[BaseType](o, t1)
+    else if(BaseType.partialOrdering.gteq(t2, t1))
+      typeRule.success[BaseType](o, t2)
+    else
+      typeRule.fail[BaseType](o, s"incompatible base types: ${Type.ppBaseType(t1)} <-> ${Type.ppBaseType(t2)}")
 
   def lubMultiplicity(o: HasOrigin, m1: MultiplicityBounds, m2: MultiplicityBounds)(implicit typeSystem: TypeSystem[SExp, Type]): TermTypingRule[SExp, Type, MultiplicityBounds] =
     typeRule.success(o, MultiplicityBounds.lub(m1, m2))

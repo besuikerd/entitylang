@@ -168,6 +168,40 @@ class TypeSpec extends FlatSpec{
     fieldAssert("A", "d")(int.one)
   }
 
+  "Merge" should "infer correct types" in {
+    val program =
+      """
+        |entity A {
+        |  a: Int?
+        |  b: Int
+        |  c: Int*
+        |  d: Int+
+        |  e = a ++ b
+        |  f = b ++ b
+        |  g = a ++ a
+        |  h = d ++ c
+        |  i = null ++ a
+        |  j = null ++ b
+        |  k = null ++ c
+        |  l = null ++ d
+        |}
+      """.stripMargin
+    val fieldAssert = createFieldAssert(program)
+
+    fieldAssert("A", "a")(int.?)
+    fieldAssert("A", "b")(int.one)
+    fieldAssert("A", "c")(int.*)
+    fieldAssert("A", "d")(int.+)
+    fieldAssert("A", "e")(int.+)
+    fieldAssert("A", "f")(int.+)
+    fieldAssert("A", "g")(int.*)
+    fieldAssert("A", "h")(int.+)
+    fieldAssert("A", "i")(int.?)
+    fieldAssert("A", "j")(int.one)
+    fieldAssert("A", "k")(int.*)
+    fieldAssert("A", "l")(int.+)
+  }
+
   def createFieldAssert(program: String): (String, String) => (Type) => Assertion = {
     val ast = EntityLangParserProvider.parser.parse(program)
     val model = Analyzer.analyze(ast)

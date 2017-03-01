@@ -12,7 +12,7 @@ class RichTypingRule[TermType <: HasOrigin, TypeType](implicit val typeSystem: T
 
   def success[T](t: T): Rule[T] = new ResultTypingRule[TermType, TypeType, T](Right(t))
   def success[T](term: HasOrigin, t: T): TermTypingRule[TermType, TypeType, T] = success(t).bindTerm(term)
-  def fail[T](term: HasOrigin, message: String): Rule[T] = new FailTypingRule[TermType, TypeType, T](term, message)
+  def fail[T](term: HasOrigin, message: String): TermTypingRule[TermType, TypeType, T] = new FailTypingRule[TermType, TypeType, T](term, message)
   def mismatchedType[T <: TypeType](term: HasOrigin, expected: T, got: T): Rule[T] = new FailTypingRule[TermType, TypeType, T](term, s"expected type: ${typeSystem.prettyPrint(expected)}, got: ${typeSystem.prettyPrint(got)}")
 
   def matching(terms: TermType*): TypingRule.Aux[TermType, TypeType, TypeType] = new MatchingTypingRule[TermType, TypeType](terms:_*)

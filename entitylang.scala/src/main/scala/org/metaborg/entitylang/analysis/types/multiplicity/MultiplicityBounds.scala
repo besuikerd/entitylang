@@ -58,6 +58,28 @@ object MultiplicityBounds{
     case ZeroOrMore() => oneToMany
     case OneOrMore() => oneToMany
   }
+
+  def merge(m1: MultiplicityBounds, m2: MultiplicityBounds): MultiplicityBounds = {
+    val lower = if(m1.lowerBound == zero && m2.lowerBound == zero) zero else one
+    val upper = (m1.upperBound, m2.upperBound) match{
+      case (One(), One()) => many
+      case (One(), Zero()) => one
+      case (Zero(), One()) => one
+      case (Many(), _) => many
+      case (_, Many()) => many
+      case (Zero(), Zero()) => zero
+    }
+    MultiplicityBounds.unapply(lower, upper).get
+  }
+
+  def unapply: (Multiplicity, Multiplicity) => Option[MultiplicityBounds] = {
+    case (Zero(), Zero()) => Some(zeroToZero)
+    case (Zero(), One()) => Some(zeroToOne)
+    case (One(), One()) => Some(oneToOne)
+    case (One(), Many()) => Some(oneToMany)
+    case (Zero(), Many()) => Some(zeroToMany)
+    case _ => None
+  }
 }
 
 case class ExactlyZero() extends MultiplicityBounds{

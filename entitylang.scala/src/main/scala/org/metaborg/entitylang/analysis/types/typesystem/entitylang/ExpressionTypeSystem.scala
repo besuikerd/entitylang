@@ -163,16 +163,24 @@ object ExpressionTypeSystem extends FancyTypeSystem[SExp, Type]{
         } yield t3
 
       case ChoiceLeft =>
-      for {
-        (t1, t2) <-
-          typeRule.all(
-            maybeEmpty[BaseType](e1),
-            multiplicityType[BaseType](e2)
-          )
-        t3 <- lub(e2, t1, t2)
+        for {
+          (t1, t2) <-
+            typeRule.all(
+              maybeEmpty[BaseType](e1),
+              multiplicityType[BaseType](e2)
+            )
+          t3 <- lub(e2, t1, t2)
       } yield t3
 
-      //      case Merge =>
+      case Merge =>
+        for{
+          (t1, t2) <-
+            typeRule.all(
+              multiplicityType[BaseType](e1),
+              multiplicityType[BaseType](e2)
+            )
+          t3 <- merge(e2, t1, t2)
+        } yield t3
       case _ => typeRule.fail(term, op + " not implemented yet")
     }
   })
