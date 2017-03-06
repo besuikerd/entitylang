@@ -1,0 +1,34 @@
+Start(
+  [ Entity(
+      "Author"
+    , [ Attribute("name", PrimitiveTypeWithDefaultMultiplicity(String()))
+      , Attribute("email", PrimitiveTypeWithDefaultMultiplicity(String()))
+      , DerivedAttribute(
+          "coolPosts"
+        , DerivedType()
+        , MethodCall(
+            Ref("posts")
+          , "filter"
+          , [ Lambda(
+                [LambdaParameter("p", EntityType("Post"))]
+              , Equal(MemberAccess(Ref("p"), "title"), String("\"Cool\""))
+              )
+            ]
+          )
+        )
+      ]
+    )
+  , Entity(
+      "Post"
+    , [Attribute("title", PrimitiveTypeWithDefaultMultiplicity(String())), Attribute("content", PrimitiveTypeWithDefaultMultiplicity(String()))]
+    )
+  , Relation(
+      EntityRef("Author")
+    , AttributeRef("posts")
+    , ZeroOrMore()
+    , One()
+    , EntityRef("Post")
+    , AttributeRef("author")
+    )
+  ]
+)

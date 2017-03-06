@@ -2,9 +2,11 @@ module Expression
 
 imports
   Common
+  Type
   
 context-free start-symbols
   Exp
+  
   
 context-free syntax
 
@@ -12,6 +14,12 @@ context-free syntax
   Exp = <(<Exp>)> {bracket}
   
   Exp.MemberAccess       = <<Exp>.<ID>>            {left}
+  
+  Exp.MethodCall         = <<Exp>.<ID>(<{Exp ","}*>)> {left}
+  Exp.Lambda             = [([{LambdaParameter ","}*]) => [Exp]] {left}
+  
+  LambdaParameter.LambdaParameter = <<ID> : <Type>>
+  
   Exp.Not                = <!<Exp>>                {right}
 
   Exp.Multiplication     = <<Exp> * <Exp>>         {left}
@@ -46,13 +54,16 @@ context-free syntax
   
 context-free priorities
 
-
+  
   { left:
     Exp.Apply
   } >
   { left:
     Exp.MemberAccess
-  } >  
+  } >
+  { left:
+    Exp.MethodCall
+  } >
   { right:
     Exp.Not
   } >
@@ -89,4 +100,7 @@ context-free priorities
   } >
   { left:
     Exp.ChoiceLeft
+  } >
+  { left:
+    Exp.Lambda 
   }

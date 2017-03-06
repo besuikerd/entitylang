@@ -6,14 +6,37 @@ object MExpression {
   import org.metaborg.scalaterms.{ sdf, STerm }
   // Generated imports
   import org.metaborg.entitylang.lang.ast.MCommon._
+  import org.metaborg.entitylang.lang.ast.MType._
   // Lexical definitions
 
   // Lexical extractors
 
   // Sort definitions
+  sealed trait SLambdaParameter extends sdf.Constructor
   sealed trait SLiteral extends sdf.Constructor with SExp
   sealed trait SExp extends sdf.Constructor
   // Constructor definitions
+  object SLambdaParameter extends scalaterms.TermLikeCompanion[SLambdaParameter] {
+    override val fromSTerm: scalaterms.FromSTerm[SLambdaParameter] = new scalaterms.FromSTerm[SLambdaParameter] {
+      override def unapply(term: STerm): Option[SLambdaParameter] = term match {
+        case LambdaParameter2.fromSTerm(lambdaparameter1) => scala.Some(lambdaparameter1)
+        case _ => scala.None
+      }
+    }
+
+    case class LambdaParameter2(id1: SID, type2: SType, origin: scalaterms.Origin) extends SLambdaParameter {
+      override def toSTerm = STerm.Cons("LambdaParameter", scala.Seq(id1.toSTerm, type2.toSTerm), scala.Some(origin))
+    }
+    object LambdaParameter2 extends scalaterms.TermLikeCompanion[LambdaParameter2] {
+      override val fromSTerm: scalaterms.FromSTerm[LambdaParameter2] = new scalaterms.FromSTerm[LambdaParameter2] {
+        override def unapply(term: STerm): Option[LambdaParameter2] = term match {
+          case STerm.Cons("LambdaParameter", scala.Seq(SID.fromSTerm(id1), SType.fromSTerm(type2)), scala.Some(origin)) =>
+            scala.Some(LambdaParameter2(id1, type2, origin))
+          case _ => None
+        }
+      }
+    }
+  }
   object SLiteral extends scalaterms.TermLikeCompanion[SLiteral] {
     override val fromSTerm: scalaterms.FromSTerm[SLiteral] = new scalaterms.FromSTerm[SLiteral] {
       override def unapply(term: STerm): Option[SLiteral] = term match {
@@ -104,6 +127,8 @@ object MExpression {
     override val fromSTerm: scalaterms.FromSTerm[SExp] = new scalaterms.FromSTerm[SExp] {
       override def unapply(term: STerm): Option[SExp] = term match {
         case MemberAccess2.fromSTerm(exp1) => scala.Some(exp1)
+        case MethodCall3.fromSTerm(exp1) => scala.Some(exp1)
+        case Lambda2.fromSTerm(exp1) => scala.Some(exp1)
         case Not1.fromSTerm(exp1) => scala.Some(exp1)
         case Multiplication2.fromSTerm(exp1) => scala.Some(exp1)
         case Division2.fromSTerm(exp1) => scala.Some(exp1)
@@ -136,6 +161,30 @@ object MExpression {
         override def unapply(term: STerm): Option[MemberAccess2] = term match {
           case STerm.Cons("MemberAccess", scala.Seq(SExp.fromSTerm(exp1), SID.fromSTerm(id2)), scala.Some(origin)) =>
             scala.Some(MemberAccess2(exp1, id2, origin))
+          case _ => None
+        }
+      }
+    }
+    case class MethodCall3(exp1: SExp, id2: SID, exp3: STerm.List[SExp], origin: scalaterms.Origin) extends SExp {
+      override def toSTerm = STerm.Cons("MethodCall", scala.Seq(exp1.toSTerm, id2.toSTerm, exp3.toSTerm), scala.Some(origin))
+    }
+    object MethodCall3 extends scalaterms.TermLikeCompanion[MethodCall3] {
+      override val fromSTerm: scalaterms.FromSTerm[MethodCall3] = new scalaterms.FromSTerm[MethodCall3] {
+        override def unapply(term: STerm): Option[MethodCall3] = term match {
+          case STerm.Cons("MethodCall", scala.Seq(SExp.fromSTerm(exp1), SID.fromSTerm(id2), SExp.fromSTerm.list(exp3)), scala.Some(origin)) =>
+            scala.Some(MethodCall3(exp1, id2, exp3, origin))
+          case _ => None
+        }
+      }
+    }
+    case class Lambda2(lambdaparameter1: STerm.List[SLambdaParameter], exp2: SExp, origin: scalaterms.Origin) extends SExp {
+      override def toSTerm = STerm.Cons("Lambda", scala.Seq(lambdaparameter1.toSTerm, exp2.toSTerm), scala.Some(origin))
+    }
+    object Lambda2 extends scalaterms.TermLikeCompanion[Lambda2] {
+      override val fromSTerm: scalaterms.FromSTerm[Lambda2] = new scalaterms.FromSTerm[Lambda2] {
+        override def unapply(term: STerm): Option[Lambda2] = term match {
+          case STerm.Cons("Lambda", scala.Seq(SLambdaParameter.fromSTerm.list(lambdaparameter1), SExp.fromSTerm(exp2)), scala.Some(origin)) =>
+            scala.Some(Lambda2(lambdaparameter1, exp2, origin))
           case _ => None
         }
       }

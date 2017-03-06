@@ -6,6 +6,11 @@ lexical syntax
   KEYWORD        = "true"
   KEYWORD        = "false"
   KEYWORD        = "null"
+  KEYWORD        = "String"
+  KEYWORD        = "Int"
+  KEYWORD        = "Float"
+  KEYWORD        = "Boolean"
+  
   
   ID             = [a-zA-Z] [a-zA-Z0-9]* 
   ID             = KEYWORD {reject}

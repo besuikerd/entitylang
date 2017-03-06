@@ -2,6 +2,7 @@ package org.metaborg.entitylang.analysis.types.typesystem.typingrule
 
 import org.metaborg.entitylang.analysis.types.typesystem.TypeSystem
 import org.metaborg.scalaterms.HasOrigin
+import org.metaborg.entitylang.util._
 
 class RichTypingRule[TermType <: HasOrigin, TypeType](implicit val typeSystem: TypeSystem[TermType, TypeType]) {
 
@@ -27,4 +28,7 @@ class RichTypingRule[TermType <: HasOrigin, TypeType](implicit val typeSystem: T
   def alternative[T1 <: TypeType, T2 <: TypeType](r1: Rule[T1], r2: Rule[T2]): Rule[TypeType] = new AlternativeTypingRule(r1, r2)
 
   def all = new AllTypingRuleBuilder[TermType, TypeType]
+
+  def all[T](rules: Seq[TypingRule.Aux[TermType, TypeType, T]]): TypingRule.Aux[TermType, TypeType, Seq[T]] =
+    result(EitherExtensions.merge(rules.map(_.run)))
 }

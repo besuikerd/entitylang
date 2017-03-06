@@ -7,7 +7,8 @@ import org.metaborg.entitylang.analysis.types.typesystem.entitylang.typingrule._
 import org.metaborg.entitylang.analysis.types.typesystem.typingrule.{AlternativeTypingRule, TypingRule}
 import org.metaborg.entitylang.desugar._
 import org.metaborg.entitylang.lang.ast.MExpression.SExp
-import org.metaborg.entitylang.lang.ast.MExpression.SExp.{Apply2, If3, MemberAccess2, Ref1}
+import org.metaborg.entitylang.lang.ast.MExpression.SExp._
+import org.metaborg.entitylang.lang.ast.MExpression.SLambdaParameter.LambdaParameter2
 import org.metaborg.entitylang.lang.ast.MExpression.SLiteral._
 import org.metaborg.scalaterms.HasOrigin
 
@@ -42,6 +43,8 @@ object ExpressionTypeSystem extends FancyTypeSystem[SExp, Type]{
     "conj" -> function1(manyBoolToBool),
     "disj" -> function1(manyBoolToBool)
   )
+
+  val methods: Map[String, FunctionN] = Map()
 
   rule[If3](implicit typeSystem => {
     case If3(e1, e2, e3, _) =>
@@ -210,5 +213,22 @@ object ExpressionTypeSystem extends FancyTypeSystem[SExp, Type]{
         MultiplicityType(baseType, multiplicity2) <- typeRule.fromTypeEnvironment(id, s"$name.${id.string}").ofType[MultiplicityType[BaseType]]
         m <- lubMultiplicity(id, multiplicity, multiplicity2)
       } yield MultiplicityType(baseType, m)
+  })
+
+  rule[Lambda2](implicit typeSystem => {
+    case Lambda2(params, e1, o) =>
+      val env = params.value.map{case LambdaParameter2(id, t, o) => id.string -> BaseTypeTypeSystem.infer(t).right.get.one}.toMap //TODO typechecking on params
+      typeRule.result(typeSystem.withBindings(env).infer(e1))
+  })
+
+  rule[MethodCall3](implicit typeSystem => {
+    case MethodCall3(e1, id, params, _) =>
+      for {
+        t @ MultiplicityType(e, m) <- entity(e1)
+//        methodName <- if(id.string == "filter") typeRule.success(id.string) else typeRule.fail(id, "unknown method: " + id.string)
+        parameterTypes <- typeRule.all(params.value.map(_.infer))
+//        _ <- if(parameterTypes.length == 1 && )
+
+      } yield t
   })
 }
