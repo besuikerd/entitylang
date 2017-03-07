@@ -228,7 +228,6 @@ object ExpressionTypeSystem extends FancyTypeSystem[SExp, Type]{
 //        methodName <- if(id.string == "filter") typeRule.success(id.string) else typeRule.fail(id, "unknown method: " + id.string)
         parameterTypes <- typeRule.all(params.value.map(_.infer))
 //        _ <- if(parameterTypes.length == 1 && )
-
       } yield t
   })
 }
