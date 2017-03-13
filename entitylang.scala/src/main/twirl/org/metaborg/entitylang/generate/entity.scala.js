@@ -6,3 +6,6 @@
 
 //@name
 
+@for(attribute <- attributes){
+  @attribute.node
+}

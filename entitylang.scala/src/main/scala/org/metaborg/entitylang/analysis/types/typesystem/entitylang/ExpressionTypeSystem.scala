@@ -12,6 +12,8 @@ import org.metaborg.entitylang.lang.ast.MExpression.SLambdaParameter.LambdaParam
 import org.metaborg.entitylang.lang.ast.MExpression.SLiteral._
 import org.metaborg.scalaterms.HasOrigin
 
+import scala.reflect.ClassTag
+
 object ExpressionTypeSystem extends FancyTypeSystem[SExp, Type]{
   type FunctionN = TypeSystem[SExp, Type] => HasOrigin => Seq[SExp] => TypingRule.Aux[SExp, Type, Type]
   type Function1 = TypeSystem[SExp, Type] => SExp => TypingRule.Aux[SExp, Type, Type]
@@ -26,6 +28,10 @@ object ExpressionTypeSystem extends FancyTypeSystem[SExp, Type]{
     t1 <- boundedNumeric(e1, zeroToMany)
   } yield t1.baseType.one
 
+  val manyStringToString: Function1 = implicit typeSystem => e1 => for{
+    t1 <- multiplicityType[StringType](e1).flatMap{t => upperBounded(e1, t, zeroToMany)}
+  } yield string.one
+
   val manyBoolToBool: Function1 = implicit typeSystem => e1 => for{
     t1 <- multiplicityType[BooleanType](e1).flatMap{t => upperBounded(e1, t, zeroToMany)}
   } yield boolean.one
@@ -39,6 +45,7 @@ object ExpressionTypeSystem extends FancyTypeSystem[SExp, Type]{
     "max" -> function1(manyNumToNum),
     "avg" -> function1(manyNumToNum),
     "sum" -> function1(manyNumToNum),
+    "concat" -> function1(manyStringToString),
     "count" -> function1(manyAnyToInt),
     "conj" -> function1(manyBoolToBool),
     "disj" -> function1(manyBoolToBool)

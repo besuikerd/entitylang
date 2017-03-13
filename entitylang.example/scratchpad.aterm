@@ -1,34 +1,49 @@
 Start(
   [ Entity(
-      "Author"
-    , [ Attribute("name", PrimitiveTypeWithDefaultMultiplicity(String()))
-      , Attribute("email", PrimitiveTypeWithDefaultMultiplicity(String()))
-      , DerivedAttribute(
-          "coolPosts"
+      "A"
+    , [ DerivedAttribute(
+          "x"
         , DerivedType()
-        , MethodCall(
-            Ref("posts")
-          , "filter"
-          , [ Lambda(
-                [LambdaParameter("p", EntityType("Post"))]
-              , Equal(MemberAccess(Ref("p"), "title"), String("\"Cool\""))
+        , Apply(
+            Ref("sum")
+          , [ MemberAccess(
+                MemberAccess(
+                  MethodCall(
+                    Ref("bs")
+                  , "filter"
+                  , [Lambda([LambdaParameter("b", EntityType("B"))], True())]
+                  )
+                , "cs"
+                )
+              , "val"
               )
             ]
           )
         )
+      , DerivedAttribute(
+          "a"
+        , DerivedType()
+        , MethodCall(MethodCall(Ref("a"), "b", []), "c", [])
+        )
       ]
     )
-  , Entity(
-      "Post"
-    , [Attribute("title", PrimitiveTypeWithDefaultMultiplicity(String())), Attribute("content", PrimitiveTypeWithDefaultMultiplicity(String()))]
-    )
+  , Entity("B", [])
+  , Entity("C", [Attribute("val", PrimitiveTypeWithDefaultMultiplicity(Int()))])
   , Relation(
-      EntityRef("Author")
-    , AttributeRef("posts")
+      EntityRef("A")
+    , AttributeRef("bs")
     , ZeroOrMore()
     , One()
-    , EntityRef("Post")
-    , AttributeRef("author")
+    , EntityRef("B")
+    , AttributeRef("a")
+    )
+  , Relation(
+      EntityRef("B")
+    , AttributeRef("cs")
+    , ZeroOrMore()
+    , One()
+    , EntityRef("C")
+    , AttributeRef("b")
     )
   ]
 )

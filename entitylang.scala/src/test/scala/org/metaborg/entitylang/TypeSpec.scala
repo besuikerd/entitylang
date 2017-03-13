@@ -18,35 +18,6 @@ import scalax.collection.GraphPredef
 
 class TypeSpec extends FlatSpec{
 
-  "strongly connected components" should " be calculated correctly" in {
-
-    val program =
-      """
-        |entity A {
-        |  c = a + b
-        |  a: Int
-        |  b: Int
-        |  d = e + 1
-        |  e = d + 1
-        |}
-      """.stripMargin
-
-    val p2 =
-      """
-        |entity A {
-        | x: Boolean = y
-        | y = x
-        |}
-      """.stripMargin
-
-//    val ast = EntityLangParserProvider.parser.parse(p2)
-    val ast = EntityLangParserProvider.parser.parseResource("/test.etl")
-    val model = Analyzer.analyze(ast)
-    val scc = model.graph.stronglyConnectedComponents
-
-    scc.foreach(println)
-  }
-
   "Multiplicity bounds" should "have a correct partial ordering" in {
     assertResult(zeroToMany)(MultiplicityBounds.lub(zeroToMany, zeroToMany))
     assertResult(oneToMany)(MultiplicityBounds.lub(oneToMany, oneToMany))

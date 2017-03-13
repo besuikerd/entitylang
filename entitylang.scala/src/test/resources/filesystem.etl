@@ -1,9 +1,14 @@
 entity File {
   name: String
-  isDirectory: Boolean
-  fileSize: Int?
-  size: Int = if(isDirectory) sum(children.size) else (fileSize <+ 0)
-  bla: Float? = if(true) 5 else null 
+  size: Int
 }
 
-relation File.children * <-> 1 File.parent
+entity Directory {
+  name: String
+  size: Int = sum(files.size) + sum(subDirectories.size) + sum(files.directory.files.size)
+  
+//  tree: String = name + concat(files.name) + "\n  " + concat(subDirectories.tree)
+}
+
+relation File.directory 1 <-> * Directory.files
+relation Directory.parent ? <-> * Directory.subDirectories

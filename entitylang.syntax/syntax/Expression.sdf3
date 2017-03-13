@@ -60,10 +60,8 @@ context-free priorities
   } >
   { left:
     Exp.MemberAccess
-  } >
-  { left:
     Exp.MethodCall
-  } >
+  } <0> >
   { right:
     Exp.Not
   } >
