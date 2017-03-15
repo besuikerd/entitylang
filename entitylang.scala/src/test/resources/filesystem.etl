@@ -1,13 +1,18 @@
 entity File {
   name: String
   size: Int
+  
+  c = directory.a + directory.b
 }
 
 entity Directory {
   name: String
   size: Int = sum(files.size) + sum(subDirectories.size) + sum(files.directory.files.size)
   
-//  tree: String = name + concat(files.name) + "\n  " + concat(subDirectories.tree)
+  
+  a: Int
+  b: Int
+  
 }
 
 relation File.directory 1 <-> * Directory.files

@@ -50,7 +50,7 @@ package object analysis {
     override val nameTerm: TermLike with HasOrigin = term.id1
   }
 
-  case class RelationNodeData(fieldType: MultiplicityType[EntityType], entityRef: EntityRef1, attributeRef: AttributeRef1, multiplicity: SMultiplicity, node: EntityFieldNode, term: Relation6) extends EntityFieldNodeData.Aux[Relation6]{
+  case class RelationNodeData(fieldType: MultiplicityType[EntityType], entityRef: EntityRef1, attributeRef: AttributeRef1, multiplicity: SMultiplicity, node: EntityFieldNode, inverse: EntityFieldNode, term: Relation6) extends EntityFieldNodeData.Aux[Relation6]{
     override val nameTerm: TermLike with HasOrigin = attributeRef
   }
 

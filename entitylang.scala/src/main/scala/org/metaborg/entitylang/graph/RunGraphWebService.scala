@@ -3,7 +3,7 @@ package org.metaborg.entitylang.graph
 import java.io.File
 import java.nio.file._
 
-import org.metaborg.entitylang.analysis.{Analyzer, AttributeNodeData, EntityFieldNode, EntityNode}
+import org.metaborg.entitylang.analysis.{Analyzer, AttributeNodeData, EntityFieldNode}
 
 import scala.collection.JavaConversions._
 import org.metaborg.entitylang.graph.webservice.GraphWebService

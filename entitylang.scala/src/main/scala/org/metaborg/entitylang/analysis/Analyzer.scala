@@ -1,9 +1,11 @@
 package org.metaborg.entitylang.analysis
 
 import org.metaborg.entitylang.analysis.types._
+import org.metaborg.entitylang.analysis.types.multiplicity.MultiplicityBounds
 import org.metaborg.entitylang.analysis.types.typesystem.entitylang.{ExpressionTypeSystem, MultiplicityTypeSystem, OptionalTypeTypeSystem, PrimitiveTypeWithMultiplicityTypeSystem}
 import org.metaborg.entitylang.analysis.types.typesystem.error.{GeneralTypeError, TypeError}
 import org.metaborg.entitylang.desugar._
+import org.metaborg.entitylang.generate.entity.invalidation.js.invalidation
 import org.metaborg.entitylang.lang.ast.MCommon.SID
 import org.metaborg.entitylang.lang.ast.MExpression.{SExp, SLiteral}
 import org.metaborg.entitylang.lang.ast.MExpression.SExp._
@@ -21,6 +23,7 @@ import org.metaborg.entitylang.util._
 import scalax.collection.GraphEdge.DiEdge
 import scalax.collection.GraphPredef._
 import scalax.collection.edge.Implicits._
+import scalax.collection.edge.LBase.LEdgeImplicits
 
 object Analyzer {
   val logger = LoggerFactory.getLogger(getClass)
@@ -36,14 +39,15 @@ object Analyzer {
     logger.info(s"collectDerivedValueDependencies took ${profiler.getAndTick()}ms")
     val pass3 = deriveTypes(pass2)
     logger.info(s"deriveTypes took ${profiler.getAndTick()}ms")
-    logger.info(s"type checker took ${profiler.total()}ms" )
-    if(pass3.errors.nonEmpty){
+    val pass4 = calculateDerivedValueInvalidations(pass3)
+    if(pass4.errors.nonEmpty){
       logger.warn("found the following errors:")
-      pass3.errors.sortWith((e1, e2) => e1.origin.line < e2.origin.line || e1.origin.line == e2.origin.line && e1.origin.column < e2.origin.column).foreach(e => logger.warn(GeneralTypeError(e.origin, e.message).errorString))
+      pass4.errors.sortWith((e1, e2) => e1.origin.line < e2.origin.line || e1.origin.line == e2.origin.line && e1.origin.column < e2.origin.column).foreach(e => logger.warn(GeneralTypeError(e.origin, e.message).errorString))
     }
-
-    logger.info(pass3.graph.toString())
-    pass3
+    logger.info(s"calculateDerivedValueInvalidations took ${profiler.getAndTick()}ms")
+    logger.info(s"type checker took ${profiler.total()}ms" )
+    logger.info(pass4.graph.toString())
+    pass4
   }
 
   def collectDefinitions(ast: Start1): AnalysisModel = {
@@ -75,12 +79,14 @@ object Analyzer {
           _
         ) =>
           val relationNodeLeft = EntityFieldNode(entityNameLeft, attributeNameLeft)
-          val leftType = MultiplicityTypeSystem.infer(multiplicityLeft).right.map(m => MultiplicityType(EntityType(entityRefRight.id1.string), m)).right.get
-          val relationNodeDataLeft = RelationNodeData(leftType, entityRefLeft, attributeRefLeft, multiplicityLeft, relationNodeLeft, relation)
-
           val relationNodeRight = EntityFieldNode(entityNameRight, attributeNameRight)
+
+          val leftType = MultiplicityTypeSystem.infer(multiplicityLeft).right.map(m => MultiplicityType(EntityType(entityRefRight.id1.string), m)).right.get
+          val relationNodeDataLeft = RelationNodeData(leftType, entityRefLeft, attributeRefLeft, multiplicityLeft, relationNodeLeft, relationNodeRight, relation)
+
+
           val rightType = MultiplicityTypeSystem.infer(multiplicityRight).right.map(m => MultiplicityType(EntityType(entityRefLeft.id1.string), m)).right.get
-          val relationNodeDataRight = RelationNodeData(rightType, entityRefRight, attributeRefRight, multiplicityRight, relationNodeRight, relation)
+          val relationNodeDataRight = RelationNodeData(rightType, entityRefRight, attributeRefRight, multiplicityRight, relationNodeRight, relationNodeLeft, relation)
 
           model
             .verifyUniqueField(relationNodeDataLeft)
@@ -293,5 +299,42 @@ object Analyzer {
       }
     }
     case _ => model
+  }
+
+  case class FieldWithMultiplicity(
+    field: EntityFieldNode,
+    multiplicity: MultiplicityBounds
+  )
+  type InvalidationPath = Seq[FieldWithMultiplicity]
+  case class FieldInvalidation(
+    field: FieldWithMultiplicity,
+    path: InvalidationPath
+  )
+  case class InvalidationFunction(field: EntityFieldNode, invalidations: Seq[FieldInvalidation])
+  type Invalidations = Seq[InvalidationFunction]
+
+  def calculateDerivedValueInvalidations(model: AnalysisModel): AnalysisModel = {
+
+    object EdgeLabelImplicits extends LEdgeImplicits[List[EntityFieldNode]]
+    import EdgeLabelImplicits._
+
+    val invalidationFunctions: Invalidations =
+      for(field <- model.fields.values.toList) yield {
+        val node = model.graph.get(field.node)
+        logger.info(s"invalidating ${node.value}")
+        val paths: Seq[FieldInvalidation] = for(edge <- node.incoming.toSeq) yield {
+          val (multiplicity, path) = edge.label.foldLeft[(MultiplicityBounds, InvalidationPath)]((MultiplicityBounds.oneToOne, Seq.empty)){
+            case ((multiplicity, seq), relation) => {
+              val inverse = model.fields(relation).asInstanceOf[RelationNodeData].inverse
+              val multiplicity2 = MultiplicityBounds.lub(multiplicity, model.fields(inverse).asInstanceOf[RelationNodeData].fieldType.multiplicity)
+              (multiplicity2, seq :+ FieldWithMultiplicity(inverse, multiplicity))
+            }
+          }
+          FieldInvalidation(FieldWithMultiplicity(edge.from.value, multiplicity), path)
+        }
+        InvalidationFunction(field.node, paths)
+      }
+    invalidationFunctions.map(invalidation.apply).foreach(println)
+    model
   }
 }
