@@ -310,7 +310,7 @@ object Analyzer {
     field: FieldWithMultiplicity,
     path: InvalidationPath
   )
-  case class InvalidationFunction(field: EntityFieldNode, invalidations: Seq[FieldInvalidation])
+  case class InvalidationFunction(field: EntityFieldNode, invalidations: Seq[FieldInvalidation], isDerivedValue: Boolean)
   type Invalidations = Seq[InvalidationFunction]
 
   def calculateDerivedValueInvalidations(model: AnalysisModel): AnalysisModel = {
@@ -332,7 +332,7 @@ object Analyzer {
           }
           FieldInvalidation(FieldWithMultiplicity(edge.from.value, multiplicity), path)
         }
-        InvalidationFunction(field.node, paths)
+        InvalidationFunction(field.node, paths, field.isInstanceOf[DerivedValueNodeData])
       }
     invalidationFunctions.map(invalidation.apply).foreach(println)
     model

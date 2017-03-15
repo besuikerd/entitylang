@@ -1,3 +1,3 @@
 @import org.metaborg.entitylang.analysis.EntityFieldNode
 @(field: EntityFieldNode)
-entities = state.@{field.entity.capitalize}_@{field.name.capitalize}.get(entities);
+entities = state.@{field.entity}_@{field.name}.get(entities);

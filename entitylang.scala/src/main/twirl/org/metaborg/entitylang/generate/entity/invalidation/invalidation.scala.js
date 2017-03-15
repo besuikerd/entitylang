@@ -12,6 +12,9 @@
 @(invalidationFunction: InvalidationFunction)
 
 function invalidate@{invalidationFunction.field.entity}_@{invalidationFunction.field.name}(state, id){
+  @if(invalidationFunction.isDerivedValue){
+  state = state.@{invalidationFunction.field.entity}_@{invalidationFunction.field.name}.remove(id);
+  }
   @for(invalidation <- invalidationFunction.invalidations){
     @invalidateField(invalidation)
   }

@@ -1,4 +1,4 @@
 @import org.metaborg.entitylang.analysis.EntityFieldNode
 
 @(field: EntityFieldNode)
-state = invalidate@{field.entity.capitalize}_@{field.name.capitalize}(entities)
+state = invalidate@{field.entity.capitalize}_@{field.name.capitalize}(state, entities)
