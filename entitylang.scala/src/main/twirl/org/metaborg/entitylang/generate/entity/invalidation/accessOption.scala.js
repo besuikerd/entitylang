@@ -5,6 +5,6 @@
 @import play.twirl.api._
 @(field: EntityFieldNode, continuation: => Appendable[JavaScript])
 if(entities !== null){
-  entities = @{fieldFromState(field)}.get(entities)
+  entities = @{fieldFromState(field)}.get(entities);
   @continuation
 }

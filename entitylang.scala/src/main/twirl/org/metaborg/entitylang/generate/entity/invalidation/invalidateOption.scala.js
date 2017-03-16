@@ -2,5 +2,5 @@
 
 @(field: EntityFieldNode)
 if(entities !== null){
-  state = invalidate@{field.entity}_@{field.name}(state, entities)
+  state = invalidate@{field.entity}_@{field.name}(state, entities);
 }

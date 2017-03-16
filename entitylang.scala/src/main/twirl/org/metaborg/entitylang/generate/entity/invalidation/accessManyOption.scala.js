@@ -5,7 +5,7 @@
 @import play.twirl.api._
 @(field: EntityFieldNode, continuation: => Appendable[JavaScript])
 entities = entities.flatMap(id => {
-  const value = @{fieldFromState(field)}.get(id)
+  const value = @{fieldFromState(field)}.get(id);
   return value !== null ? [value] : [];
 });
 @continuation
