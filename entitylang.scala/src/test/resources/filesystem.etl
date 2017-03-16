@@ -1,18 +1,13 @@
 entity File {
   name: String
   size: Int
-  
-  c = directory.a + directory.b
 }
 
 entity Directory {
   name: String
-  size: Int = sum(files.size) + sum(subDirectories.size) + sum(files.directory.files.size)
+  size: Int = sum(files.size) + sum(subDirectories.size) //sum(subDirectories.size)
   
-  
-  a: Int
-  b: Int
-  
+  allNames: String* = name ++ files.name ++ subDirectories.allNames
 }
 
 relation File.directory 1 <-> * Directory.files

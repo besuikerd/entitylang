@@ -4,5 +4,8 @@
 @import org.metaborg.entitylang.generate.entity.invalidation.js.access
 @import play.twirl.api._
 @(field: EntityFieldNode, continuation: => Appendable[JavaScript])
-entities = @{fieldFromState(field)}.get(entities);
+entities = entities.flatMap(id => {
+  const value = @{fieldFromState(field)}.get(id)
+  return value !== null ? [value] : [];
+});
 @continuation

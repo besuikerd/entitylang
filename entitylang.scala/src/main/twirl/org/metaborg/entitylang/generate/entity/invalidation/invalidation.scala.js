@@ -11,9 +11,9 @@
 @import org.metaborg.entitylang.analysis.Analyzer.InvalidationFunction
 @(invalidationFunction: InvalidationFunction)
 
-function invalidate@{invalidationFunction.field.entity}_@{invalidationFunction.field.name}(state, id){
+export function invalidate@{invalidationFunction.field.entity}_@{invalidationFunction.field.name}(state, id){
   @if(invalidationFunction.isDerivedValue){
-  state = state.@{invalidationFunction.field.entity}_@{invalidationFunction.field.name}.remove(id);
+  state = state.update('@{invalidationFunction.field.entity}_@{invalidationFunction.field.name}', set => set.remove(id));
   }
   @for(invalidation <- invalidationFunction.invalidations){
     @invalidateField(invalidation)

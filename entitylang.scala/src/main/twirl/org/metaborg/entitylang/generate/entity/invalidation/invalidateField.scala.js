@@ -14,8 +14,5 @@
 {
   //@{fieldInvalidation.field.field.entity}.@{fieldInvalidation.field.field.name}
   let entities = id;
-  @for(FieldWithMultiplicity(field, multiplicity) <- fieldInvalidation.path){
-    @access(field, multiplicity)
-  }
-  @invalidate(fieldInvalidation.field)
+  @access(fieldInvalidation.path, invalidate(fieldInvalidation.field))
 }

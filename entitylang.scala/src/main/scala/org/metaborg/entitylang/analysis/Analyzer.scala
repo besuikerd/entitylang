@@ -305,7 +305,12 @@ object Analyzer {
     field: EntityFieldNode,
     multiplicity: MultiplicityBounds
   )
-  type InvalidationPath = Seq[FieldWithMultiplicity]
+  case class PathField(
+    field: EntityFieldNode,
+    previousMultiplicity: MultiplicityBounds,
+    nextMultiplicity: MultiplicityBounds
+  )
+  type InvalidationPath = Seq[PathField]
   case class FieldInvalidation(
     field: FieldWithMultiplicity,
     path: InvalidationPath
@@ -326,8 +331,10 @@ object Analyzer {
           val (multiplicity, path) = edge.label.foldLeft[(MultiplicityBounds, InvalidationPath)]((MultiplicityBounds.oneToOne, Seq.empty)){
             case ((multiplicity, seq), relation) => {
               val inverse = model.fields(relation).asInstanceOf[RelationNodeData].inverse
-              val multiplicity2 = MultiplicityBounds.lub(multiplicity, model.fields(inverse).asInstanceOf[RelationNodeData].fieldType.multiplicity)
-              (multiplicity2, seq :+ FieldWithMultiplicity(inverse, multiplicity))
+              val inverseMultiplicity = model.fields(inverse).asInstanceOf[RelationNodeData].fieldType.multiplicity
+
+              val lubMultiplicity = MultiplicityBounds.lub(multiplicity, inverseMultiplicity)
+              (lubMultiplicity, seq :+ PathField(inverse, multiplicity, inverseMultiplicity))
             }
           }
           FieldInvalidation(FieldWithMultiplicity(edge.from.value, multiplicity), path)
