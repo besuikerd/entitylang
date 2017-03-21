@@ -8,26 +8,9 @@ entity Directory {
   size: Int = sum(files.size) + sum(subDirectories.size)
   
   
-  x: Int?
-  z: Int
-  y = x % z
-  
+  x: Float? = null
   allNames: String* = name ++ files.name ++ subDirectories.allNames  
 }
 
 relation File.directory 1 <-> * Directory.files
 relation Directory.parent ? <-> * Directory.subDirectories
-
-
-
-entity Todo{
-  task: String
-  finished: Boolean
-}
-
-entity TodoList{
-  finishedTodos = todos.filter((t:Todo) => t.finished)
-}
-
-relation TodoList.form 1 <-> ? Todo.form
-relation TodoList.todos * <-> ? Todo.list
