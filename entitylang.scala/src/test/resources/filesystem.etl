@@ -1,6 +1,8 @@
 entity File {
   name: String
   size: Int
+  
+  das = 1 + 2 + 3
 }
 
 entity Directory {

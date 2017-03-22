@@ -4,6 +4,7 @@ import org.metaborg.entitylang.analysis.types._
 import org.metaborg.entitylang.analysis.types.multiplicity.MultiplicityBounds
 import org.metaborg.entitylang.analysis.types.typesystem.entitylang.{ExpressionTypeSystem, MultiplicityTypeSystem, OptionalTypeTypeSystem, PrimitiveTypeWithMultiplicityTypeSystem}
 import org.metaborg.entitylang.analysis.types.typesystem.error.{GeneralTypeError, TypeError}
+import org.metaborg.entitylang.analysis.types.typesystem.typingrule.TypingResult
 import org.metaborg.entitylang.desugar._
 import org.metaborg.entitylang.generate.entity.invalidation.js.invalidation
 import org.metaborg.entitylang.lang.ast.MCommon.SID
@@ -57,11 +58,11 @@ object Analyzer {
           val entityFields: Seq[EntityFieldNodeData] = member2.value.map {
             case attribute @ Attribute2(SID(fieldName, _), tpe, origin) =>
               val entityFieldNode = EntityFieldNode(entityName, fieldName)
-              val inferredType = PrimitiveTypeWithMultiplicityTypeSystem.infer(tpe).right.getOrElse(top)
+              val inferredType = PrimitiveTypeWithMultiplicityTypeSystem.infer(tpe).right.map(_.t).right.getOrElse(top)
               AttributeNodeData(inferredType, entityFieldNode, attribute)
             case derivedValue @ DerivedAttribute3(SID(fieldName, _), tpe, e, origin) =>
               val entityFieldNode = EntityFieldNode(entityName, fieldName)
-              val inferredType = OptionalTypeTypeSystem.infer(tpe).right.getOrElse(top)
+              val inferredType = OptionalTypeTypeSystem.infer(tpe).right.map(_.t).right.getOrElse(top)
               DerivedValueNodeData(inferredType, entityFieldNode, derivedValue)
           }
           model.copy(
@@ -81,11 +82,11 @@ object Analyzer {
           val relationNodeLeft = EntityFieldNode(entityNameLeft, attributeNameLeft)
           val relationNodeRight = EntityFieldNode(entityNameRight, attributeNameRight)
 
-          val leftType = MultiplicityTypeSystem.infer(multiplicityLeft).right.map(m => MultiplicityType(EntityType(entityRefRight.id1.string), m)).right.get
+          val leftType = MultiplicityTypeSystem.infer(multiplicityLeft).right.map(m => MultiplicityType(EntityType(entityRefRight.id1.string), m.t)).right.get
           val relationNodeDataLeft = RelationNodeData(leftType, entityRefLeft, attributeRefLeft, multiplicityLeft, relationNodeLeft, relationNodeRight, relation)
 
 
-          val rightType = MultiplicityTypeSystem.infer(multiplicityRight).right.map(m => MultiplicityType(EntityType(entityRefLeft.id1.string), m)).right.get
+          val rightType = MultiplicityTypeSystem.infer(multiplicityRight).right.map(m => MultiplicityType(EntityType(entityRefLeft.id1.string), m.t)).right.get
           val relationNodeDataRight = RelationNodeData(rightType, entityRefRight, attributeRefRight, multiplicityRight, relationNodeRight, relationNodeLeft, relation)
 
           model
@@ -273,11 +274,13 @@ object Analyzer {
       inferred match {
         case Left(errors) =>
           model.foldWith(errors)(model => error => model.reportError(error.message, error.origin))
-        case Right(inferredType) => {
+        case Right(TypingResult(inferredType, subTypes)) => {
           println(s"${node.entity}.${node.name} : ${Type.ppType(inferredType)}")
+
+          println(s"subTypes: ${subTypes.values.map(Type.ppType).mkString("\n")}")
           tpe match{
             case TopType() => model.copy(fields = model.fields +
-              (node -> d.copy(fieldType = inferredType))
+              (node -> d.copy(fieldType = inferredType.t))
             )
             case t1 @ MultiplicityType(baseType, m) =>
               inferredType match{

@@ -1,15 +1,14 @@
 package org.metaborg.entitylang.analysis.types.typesystem
 
 import org.metaborg.entitylang.analysis.types.typesystem.error.{GeneralTypeError, TypeError}
-import org.metaborg.entitylang.analysis.types.typesystem.typingrule.TypingRule.Aux
 import org.metaborg.entitylang.analysis.types.typesystem.typingrule.{TermTypingRule, TypingRule}
 import org.metaborg.scalaterms.{HasOrigin, Origin}
 
 import scala.reflect.{ClassTag, classTag}
 
 
-trait TypeSystem[TermType, TypeType]{
-  def infer(ast: TermType): TypingRule.Aux[TermType, TypeType, TypeType]#TypingResult
+trait TypeSystem[TermType <: HasOrigin, TypeType]{
+  def infer(ast: TermType): TypingRule[TermType, TypeType, TypeType]#Result
   def typeEnvironment: Map[String, TypeType]
   def prettyPrint(t: TypeType): String = t.toString
 
@@ -23,14 +22,14 @@ trait TypeSystem[TermType, TypeType]{
 trait FancyTypeSystem[TermType <: HasOrigin, TypeType] extends TypeSystem[TermType, TypeType]{ self =>
   override val typeEnvironment: Map[String, TypeType] = Map.empty
 
-  type Rule[T] = TypeSystem[TermType, TypeType] => T => TypingRule.Aux[TermType, TypeType, TypeType]
+  type Rule[T] = TypeSystem[TermType, TypeType] => T => TypingRule[TermType, TypeType, TypeType]
 
   def rules: Seq[TopLevelTypingRule[TermType, TypeType]] = materializedRules
 
   private lazy val materializedRules = mutableRules.toSeq
   private val mutableRules: scala.collection.mutable.ListBuffer[TopLevelTypingRule[TermType, TypeType]] = scala.collection.mutable.ListBuffer.empty
 
-  override def infer(ast: TermType): Aux[TermType, TypeType, TypeType]#TypingResult =
+  override def infer(ast: TermType): TypingRule[TermType, TypeType, TypeType]#Result =
     rules
       .view
       .flatMap(rule => rule(this).andThen(x => Seq(x.run(this))).applyOrElse(ast, (_: TermType) => Seq.empty))
@@ -60,7 +59,7 @@ trait FancyTypeSystem[TermType <: HasOrigin, TypeType] extends TypeSystem[TermTy
 
 
 class TypeSystemImpl[TermType <: HasOrigin, TypeType](val rules: Seq[TopLevelTypingRule[TermType, TypeType]], val typeEnvironment: Map[String, TypeType], val prettyPrinter: TypeType => String) extends TypeSystem[TermType, TypeType]{
-  override def infer(ast: TermType): TypingRule.Aux[TermType, TypeType, TypeType]#TypingResult =
+  override def infer(ast: TermType): TypingRule[TermType, TypeType, TypeType]#Result =
     rules
       .view
       .flatMap(pf => pf(this).andThen(x => Seq(x.run(this))).applyOrElse(ast, (_: TermType) => Seq.empty))

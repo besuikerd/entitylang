@@ -15,8 +15,8 @@ import org.metaborg.scalaterms.HasOrigin
 import scala.reflect.ClassTag
 
 object ExpressionTypeSystem extends FancyTypeSystem[SExp, Type]{
-  type FunctionN = TypeSystem[SExp, Type] => HasOrigin => Seq[SExp] => TypingRule.Aux[SExp, Type, Type]
-  type Function1 = TypeSystem[SExp, Type] => SExp => TypingRule.Aux[SExp, Type, Type]
+  type FunctionN = TypeSystem[SExp, Type] => HasOrigin => Seq[SExp] => TypingRule[SExp, Type, Type]
+  type Function1 = TypeSystem[SExp, Type] => SExp => TypingRule[SExp, Type, Type]
 
   def function1(inner: Function1): FunctionN = implicit typeSystem => origin => expressions =>
     if(expressions.isEmpty)
@@ -99,7 +99,7 @@ object ExpressionTypeSystem extends FancyTypeSystem[SExp, Type]{
             boundedMultiplicityType[StringType](e1, zeroToOne),
             boundedMultiplicityType[BaseType](e2, zeroToOne)
           )
-          m <- lubMultiplicity(e2, t1.multiplicity, t2.multiplicity)
+          m <- lubMultiplicity(t1.multiplicity, t2.multiplicity)
         } yield string withMultiplicity m
 
         typeRule.alternative(
@@ -124,7 +124,7 @@ object ExpressionTypeSystem extends FancyTypeSystem[SExp, Type]{
             boundedMultiplicityType(int, e1, zeroToOne),
             boundedMultiplicityType(int, e2, zeroToOne)
           )
-          m <- lubMultiplicity(e2, t1.multiplicity, t2.multiplicity)
+          m <- lubMultiplicity(t1.multiplicity, t2.multiplicity)
         } yield int withMultiplicity m
 
       case CompareOperator(_) =>
@@ -133,7 +133,7 @@ object ExpressionTypeSystem extends FancyTypeSystem[SExp, Type]{
             boundedNumeric(e1, zeroToOne),
             boundedNumeric(e2, zeroToOne)
           )
-          m <- lubMultiplicity(e2, t1.multiplicity, t2.multiplicity)
+          m <- lubMultiplicity(t1.multiplicity, t2.multiplicity)
         } yield boolean withMultiplicity m
 
       case Equal =>
@@ -218,13 +218,13 @@ object ExpressionTypeSystem extends FancyTypeSystem[SExp, Type]{
       for {
         MultiplicityType(EntityType(name), multiplicity) <- entity(e)
         MultiplicityType(baseType, multiplicity2) <- typeRule.fromTypeEnvironment(id, s"$name.${id.string}").ofType[MultiplicityType[BaseType]]
-        m <- lubMultiplicity(id, multiplicity, multiplicity2)
+        m <- lubMultiplicity(multiplicity, multiplicity2)
       } yield MultiplicityType(baseType, m)
   })
 
   rule[Lambda2](implicit typeSystem => {
     case Lambda2(params, e1, o) =>
-      val env = params.value.map{case LambdaParameter2(id, t, o) => id.string -> BaseTypeTypeSystem.infer(t).right.get.one}.toMap //TODO typechecking on params
+      val env = params.value.map{case LambdaParameter2(id, t, o) => id.string -> BaseTypeTypeSystem.infer(t).right.get.t.one}.toMap //TODO typechecking on params
       typeRule.result(typeSystem.withBindings(env).infer(e1))
   })
 

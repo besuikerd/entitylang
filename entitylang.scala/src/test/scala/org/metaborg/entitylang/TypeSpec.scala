@@ -221,14 +221,14 @@ class TypeSpec extends FlatSpec{
     illTyped("f(true)")
   }
 
-  def inferType(exp: SExp): TypingRule.Aux[SExp, Type, Type]#TypingResult =
+  def inferType(exp: SExp): TypingRule[SExp, Type, Type]#Result =
     ExpressionTypeSystem.infer(exp)
 
   def parseError(cause: SpoofaxParser.Error) = fail("Parse error: " + cause)
 
   def parse(exp: String): Either[SpoofaxParser.Error, SExp] = EntityLangParserProvider.expParser.tryParse(exp)
 
-  def inferType(exp: String): TypingRule.Aux[SExp, Type, Type]#TypingResult = parse(exp).fold(parseError, inferType)
+  def inferType(exp: String): TypingRule[SExp, Type, Type]#Result = parse(exp).fold(parseError, inferType)
 
   def wellTyped(exp: String) =
     inferType(exp).left.foreach(_.foreach(typeError))
