@@ -1,0 +1,49 @@
+Start(
+  [ Entity(
+      "A"
+    , [ DerivedAttribute(
+          "x"
+        , DerivedType()
+        , Apply(
+            Ref("sum")
+          , [ MemberAccess(
+                MemberAccess(
+                  MethodCall(
+                    Ref("bs")
+                  , "filter"
+                  , [Lambda([LambdaParameter("b", EntityType("B"))], True())]
+                  )
+                , "cs"
+                )
+              , "val"
+              )
+            ]
+          )
+        )
+      , DerivedAttribute(
+          "a"
+        , DerivedType()
+        , MethodCall(MethodCall(Ref("a"), "b", []), "c", [])
+        )
+      ]
+    )
+  , Entity("B", [])
+  , Entity("C", [Attribute("val", PrimitiveTypeWithDefaultMultiplicity(Int()))])
+  , Relation(
+      EntityRef("A")
+    , AttributeRef("bs")
+    , ZeroOrMore()
+    , One()
+    , EntityRef("B")
+    , AttributeRef("a")
+    )
+  , Relation(
+      EntityRef("B")
+    , AttributeRef("cs")
+    , ZeroOrMore()
+    , One()
+    , EntityRef("C")
+    , AttributeRef("b")
+    )
+  ]
+)

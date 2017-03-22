@@ -1,20 +1,30 @@
 package org.metaborg.entitylang.analysis
 
 import org.metaborg.entitylang.analysis.types._
+import org.metaborg.entitylang.analysis.types.multiplicity.MultiplicityBounds
 import org.metaborg.entitylang.analysis.types.typesystem.entitylang.{ExpressionTypeSystem, MultiplicityTypeSystem, OptionalTypeTypeSystem, PrimitiveTypeWithMultiplicityTypeSystem}
 import org.metaborg.entitylang.analysis.types.typesystem.error.{GeneralTypeError, TypeError}
+import org.metaborg.entitylang.analysis.types.typesystem.typingrule.TypingResult
 import org.metaborg.entitylang.desugar._
+import org.metaborg.entitylang.generate.entity.invalidation.js.invalidation
+import org.metaborg.entitylang.lang.ast.MCommon.SID
 import org.metaborg.entitylang.lang.ast.MExpression.{SExp, SLiteral}
 import org.metaborg.entitylang.lang.ast.MExpression.SExp._
+import org.metaborg.entitylang.lang.ast.MExpression.SLambdaParameter.LambdaParameter2
 import org.metaborg.entitylang.lang.ast.MModel.SAttribute.{Attribute2, DerivedAttribute3}
 import org.metaborg.entitylang.lang.ast.MModel.SAttributeRef.AttributeRef1
 import org.metaborg.entitylang.lang.ast.MModel.SEntityRef.EntityRef1
 import org.metaborg.entitylang.lang.ast.MModel.SModel.{Entity2, Relation6}
+import org.metaborg.entitylang.lang.ast.MType.SType.EntityType1
 import org.metaborg.entitylang.lang.ast.Mentitylang.SStart.Start1
 import org.metaborg.entitylang.util.profiler.Profiler
 import org.slf4j.LoggerFactory
+import org.metaborg.entitylang.util._
 
+import scalax.collection.GraphEdge.DiEdge
 import scalax.collection.GraphPredef._
+import scalax.collection.edge.Implicits._
+import scalax.collection.edge.LBase.LEdgeImplicits
 
 object Analyzer {
   val logger = LoggerFactory.getLogger(getClass)
@@ -30,48 +40,54 @@ object Analyzer {
     logger.info(s"collectDerivedValueDependencies took ${profiler.getAndTick()}ms")
     val pass3 = deriveTypes(pass2)
     logger.info(s"deriveTypes took ${profiler.getAndTick()}ms")
-    logger.info(s"type checker took ${profiler.total()}ms" )
-    if(pass3.errors.nonEmpty){
+    val pass4 = calculateDerivedValueInvalidations(pass3)
+    if(pass4.errors.nonEmpty){
       logger.warn("found the following errors:")
-      pass3.errors.sortWith((e1, e2) => e1.origin.line < e2.origin.line || e1.origin.line == e2.origin.line && e1.origin.column < e2.origin.column).foreach(e => logger.warn(GeneralTypeError(e.origin, e.message).errorString))
+      pass4.errors.sortWith((e1, e2) => e1.origin.line < e2.origin.line || e1.origin.line == e2.origin.line && e1.origin.column < e2.origin.column).foreach(e => logger.warn(GeneralTypeError(e.origin, e.message).errorString))
     }
-    pass3
+    logger.info(s"calculateDerivedValueInvalidations took ${profiler.getAndTick()}ms")
+    logger.info(s"type checker took ${profiler.total()}ms" )
+    logger.info(pass4.graph.toString())
+    pass4
   }
 
   def collectDefinitions(ast: Start1): AnalysisModel = {
     ast.model1.value.foldLeft(AnalysisModel.empty) {
       case (model, unit) => unit match {
-        case e@Entity2(id1, member2, origin) => {
-          val entityNode = EntityNode(id1.string)
-          val entityNodeData = EntityNodeData(e)
-          model.copy(entities = model.entities + (entityNode -> entityNodeData)).foldWith(member2.value)(model => member => {
-            val entityFieldNodeData = member match {
-              case attribute@Attribute2(name, tpe, origin) =>
-                val entityFieldNode = AttributeNode(entityNode.name, name.string)
-                val inferredType = PrimitiveTypeWithMultiplicityTypeSystem.infer(tpe).right.getOrElse(top)
-                AttributeNodeData(inferredType, entityFieldNode, attribute)
-              case derivedValue@DerivedAttribute3(name, tpe, e, origin) =>
-                val entityFieldNode = DerivedValueNode(entityNode.name, name.string)
-                val inferredType = OptionalTypeTypeSystem.infer(tpe).right.getOrElse(top)
-                DerivedValueNodeData(inferredType, entityFieldNode, derivedValue)
-            }
-
-            model.verifyUniqueField(entityFieldNodeData).copy(
-              fields = model.fields + (entityFieldNodeData.node -> entityFieldNodeData),
-              graph = model.graph + (entityNode ~> entityFieldNodeData.node)
-            )
-          })
+        case Entity2(SID(entityName, _), member2, origin) => {
+          val entityFields: Seq[EntityFieldNodeData] = member2.value.map {
+            case attribute @ Attribute2(SID(fieldName, _), tpe, origin) =>
+              val entityFieldNode = EntityFieldNode(entityName, fieldName)
+              val inferredType = PrimitiveTypeWithMultiplicityTypeSystem.infer(tpe).right.map(_.t).right.getOrElse(top)
+              AttributeNodeData(inferredType, entityFieldNode, attribute)
+            case derivedValue @ DerivedAttribute3(SID(fieldName, _), tpe, e, origin) =>
+              val entityFieldNode = EntityFieldNode(entityName, fieldName)
+              val inferredType = OptionalTypeTypeSystem.infer(tpe).right.map(_.t).right.getOrElse(top)
+              DerivedValueNodeData(inferredType, entityFieldNode, derivedValue)
+          }
+          model.copy(
+            fields = model.fields ++ entityFields.map(f => f.node -> f)
+            , graph = model.graph ++ entityFields.map(field => OuterNode(field.node))
+          )
         }
-        case relation@Relation6(entityRefLeft: EntityRef1, attributeRefLeft: AttributeRef1, multiplicityLeft, multiplicityRight, entityRefRight: EntityRef1, attributeRefRight: AttributeRef1, _) =>
-          val entityNodeLeft = EntityNode(entityRefLeft.id1.string)
-          val relationNodeLeft = RelationNode(entityNodeLeft.name, attributeRefLeft.id1.string)
-          val leftType = MultiplicityTypeSystem.infer(multiplicityLeft).right.map(m => MultiplicityType(EntityType(entityRefRight.id1.string), m)).right.get
-          val relationNodeDataLeft = RelationNodeData(leftType, entityRefLeft, attributeRefLeft, multiplicityLeft, relationNodeLeft, relation)
+        case relation@Relation6(
+          entityRefLeft @ EntityRef1(SID(entityNameLeft, _), _),
+          attributeRefLeft @ AttributeRef1(SID(attributeNameLeft, _), _),
+          multiplicityLeft,
+          multiplicityRight,
+          entityRefRight @ EntityRef1(SID(entityNameRight, _), _),
+          attributeRefRight @ AttributeRef1(SID(attributeNameRight, _), _),
+          _
+        ) =>
+          val relationNodeLeft = EntityFieldNode(entityNameLeft, attributeNameLeft)
+          val relationNodeRight = EntityFieldNode(entityNameRight, attributeNameRight)
 
-          val entityNodeRight = EntityNode(entityRefRight.id1.string)
-          val relationNodeRight = RelationNode(entityNodeRight.name, attributeRefRight.id1.string)
-          val rightType = MultiplicityTypeSystem.infer(multiplicityRight).right.map(m => MultiplicityType(EntityType(entityRefLeft.id1.string), m)).right.get
-          val relationNodeDataRight = RelationNodeData(rightType, entityRefRight, attributeRefRight, multiplicityRight, relationNodeRight, relation)
+          val leftType = MultiplicityTypeSystem.infer(multiplicityLeft).right.map(m => MultiplicityType(EntityType(entityRefRight.id1.string), m.t)).right.get
+          val relationNodeDataLeft = RelationNodeData(leftType, entityRefLeft, attributeRefLeft, multiplicityLeft, relationNodeLeft, relationNodeRight, relation)
+
+
+          val rightType = MultiplicityTypeSystem.infer(multiplicityRight).right.map(m => MultiplicityType(EntityType(entityRefLeft.id1.string), m.t)).right.get
+          val relationNodeDataRight = RelationNodeData(rightType, entityRefRight, attributeRefRight, multiplicityRight, relationNodeRight, relationNodeLeft, relation)
 
           model
             .verifyUniqueField(relationNodeDataLeft)
@@ -81,8 +97,8 @@ object Analyzer {
               + (relationNodeLeft -> relationNodeDataLeft)
               + (relationNodeRight -> relationNodeDataRight),
             graph = model.graph
-              + (entityNodeLeft ~> relationNodeLeft)
-              + (entityNodeRight ~> relationNodeRight)
+              + relationNodeLeft
+              + relationNodeRight
           )
       }
     }
@@ -90,62 +106,106 @@ object Analyzer {
 
 
   def collectDerivedValueDependencies(model: AnalysisModel): AnalysisModel = {
-    def addDependency(model: AnalysisModel, entityNode: EntityNode, field: String): (EntityNode, Seq[AnalysisNode]) = {
-      val optDependency = for {
-        entityField <- model.graph.findEntityField(entityNode.name, field)
-        entityFieldData <- model.fields.get(entityField.typedValue[EntityFieldNode])
-        targetEntity <- Some(entityFieldData.fieldType match {
-          case MultiplicityType(EntityType(t), _) => t
-          case _ => entityNode.name
-        })
-      } yield (EntityNode(targetEntity), entityField)
-      optDependency match {
-        case Some((entityNode, target)) => (entityNode, Seq(target))
-        case None => (entityNode, Seq.empty)
+    type Path = Seq[EntityFieldNode]
+    case class WalkContext(entity: String, path: Path, bindings: Map[String, EntityFieldNode] = Map.empty)
+
+    def addDependency(model: AnalysisModel, context: WalkContext, field: String): (WalkContext, Seq[Path]) = {
+      context.bindings.get(field) match{
+        case Some(targetNode) =>
+          val path = targetNode +: context.path
+          (context.copy(
+            entity = targetNode.entity,
+            path = path
+          ), Seq(path))
+        case None =>
+          val targetNode = EntityFieldNode(context.entity, field)
+          val optDependency = for {
+            entityFieldData <- model.fields.get(targetNode)
+            targetEntity = entityFieldData.fieldType match {
+              case MultiplicityType(EntityType(t), _) => t
+              case _ => context.entity
+            }
+          } yield context.copy(
+            entity = targetEntity
+            , path = targetNode +: context.path
+          )
+          optDependency match{
+            case Some(ctx) => (ctx, Seq(ctx.path))
+            case None => (context, Seq.empty)
+          }
       }
+//      context.bindings.get(field) match{
+//        case Some(targetNode) =>
+//          val context2 = context.copy(
+//            entity = targetNode.entity
+//            , path = EntityFieldNode(context.entity, field) +: context.path
+//          )
+//          (context2, Seq.empty)
+//        case None => //in case we refer to a field in that node, add an edge
+//          val optDependency = for {
+//            entityField <- model.graph.findEntityField(context.entity, field)
+//            entityFieldData <- model.fields.get(entityField.typedValue[EntityFieldNode])
+//            targetEntity <- Some(entityFieldData.fieldType match {
+//              case MultiplicityType(EntityType(t), _) => t
+//              case _ => context.entity
+//            })
+//          } yield (context.copy(entity = targetEntity), entityField)
+//          optDependency match {
+//            case Some((context2, target)) => (context2, Seq(target.value))
+//            case None => (context, Seq.empty)
+//          }
+//      }
     }
 
-    def walk(model: AnalysisModel, entityNode: EntityNode, e: SExp): (EntityNode, Seq[AnalysisNode]) = e match {
+    def walk(model: AnalysisModel, context: WalkContext, e: SExp): (WalkContext, Seq[Path]) = e match {
       case MemberAccess2(e1, name, _) =>
-        val (entityNode2, edges) = walk(model, entityNode, e1)
-        val (entityNode3, edges2) = addDependency(model, entityNode2, name.string)
-        (entityNode3, edges ++ edges2)
-      case UnExp(_, e1) => walk(model, entityNode, e1)
+        val (context2, edges) = walk(model, context, e1)
+        val (context3, edges2) = addDependency(model, context2, name.string)
+        (context3, edges ++ edges2)
+      case UnExp(_, e1) => walk(model, context, e1)
       case BinExp(_, e1, e2) =>
-        val (_, nodes1) = walk(model, entityNode, e1)
-        val (_, nodes2) = walk(model, entityNode, e2)
-        (entityNode, nodes1 ++ nodes2)
+        val (_, nodes1) = walk(model, context, e1)
+        val (_, nodes2) = walk(model, context, e2)
+        (context, nodes1 ++ nodes2)
       case Apply2(e1, params, origin) =>
-        (entityNode, params.value.flatMap(e => walk(model, entityNode, e)._2))
+        (context, params.value.flatMap(e => walk(model, context, e)._2))
       case Ref1(id1, origin) =>
-        addDependency(model, entityNode, id1.string)
+        addDependency(model, context, id1.string)
       case If3(e1, e2, e3, origin) =>
-        val (_, nodes1) = walk(model, entityNode, e1)
-        val (_, nodes2) = walk(model, entityNode, e2)
-        val (_, nodes3) = walk(model, entityNode, e3)
-        (entityNode, nodes1 ++ nodes2 ++ nodes3)
-      case literal: SLiteral => (entityNode, Seq.empty)
+        val (_, nodes1) = walk(model, context, e1)
+        val (_, nodes2) = walk(model, context, e2)
+        val (_, nodes3) = walk(model, context, e3)
+        (context, nodes1 ++ nodes2 ++ nodes3)
+      case literal: SLiteral => (context, Seq.empty)
+      case Lambda2(parameters, e, _) => //If first parameter is a lambda, bind last node of path to the parameter
+        val entityParameters = parameters.value.headOption.collect{
+          case LambdaParameter2(id, t: EntityType1, _) if context.path.nonEmpty && t.id1.string == context.path.head.entity =>
+            id.string -> context.path.head
+        }.toMap
+        val context2 = context.copy(bindings =  context.bindings ++ entityParameters)
+        (context, walk(model, context2, e)._2)
+      case MethodCall3(e1, _, params, _) =>
+        val (context2, nodes1) = walk(model, context, e1)
+        (context, params.value.foldLeft(nodes1){case (acc, cur) => acc ++ walk(model, context2, cur)._2})
     }
 
-    val edges = model.graph.derivedValues.par.map(node => {
-      val targets = for {
-        derivedValueNode <- node.optTypedValue[DerivedValueNode]
-        derivedValueData@DerivedValueNodeData(_, _, _) <- model.fields.get(derivedValueNode)
-        entityNode <- model.graph.findEntity(derivedValueNode.entity)
-      } yield {
-        walk(model, entityNode.typedValue[EntityNode], derivedValueData.term.exp3)._2
-      }
+    val edges: Seq[AnalysisEdge] = model.derivedValues.flatMap{ nodeData =>
+      val (_, paths) = walk(model, WalkContext(nodeData.node.entity, Seq.empty, Map.empty), nodeData.term.exp3)
+      paths.map{case target +: pathTo => (nodeData.node ~+#> target)(pathTo)}
+    }
 
-      targets.toSeq.flatten[AnalysisNode].map(target => node.value ~> target.value)
-
-    }).reduce(_ ++ _)
     model.copy(graph = model.graph ++ edges)
+
+//      val graph2 = targets.toSeq.flatten[AnalysisNode].foldLeft(model.graph) { case (graph, targetNode) => graph + (node.value ~> targetNode.value) }
+//      model.copy(
+//        graph = graph2
+//      )
   }
 
   def deriveTypes(model: AnalysisModel): AnalysisModel = {
 //    val scss = model.graph.stronglyConnectedComponents
 
-    val scss = mutableSCC(model.graph.filter(model.graph.having(node = n => n.value.isInstanceOf[EntityFieldNode])))
+    val scss = mutableSCC(model.graph)
 
     val fieldCount = scss.foldLeft(0){ case (acc, Left(n)) => acc + n.length; case (acc, Right(n)) => acc + 1}
     logger.info(s"scc found $fieldCount fields out of ${model.fields.size}")
@@ -213,11 +273,13 @@ object Analyzer {
       inferred match {
         case Left(errors) =>
           model.foldWith(errors)(model => error => model.reportError(error.message, error.origin))
-        case Right(inferredType) => {
+        case Right(TypingResult(inferredType, subTypes)) => {
           println(s"${node.entity}.${node.name} : ${Type.ppType(inferredType)}")
+
+          println(s"subTypes: ${subTypes.values.map(Type.ppType).mkString("\n")}")
           tpe match{
             case TopType() => model.copy(fields = model.fields +
-              (node -> d.copy(fieldType = inferredType))
+              (node -> d.copy(fieldType = inferredType.t))
             )
             case t1 @ MultiplicityType(baseType, m) =>
               inferredType match{
@@ -239,5 +301,49 @@ object Analyzer {
       }
     }
     case _ => model
+  }
+
+  case class FieldWithMultiplicity(
+    field: EntityFieldNode,
+    multiplicity: MultiplicityBounds
+  )
+  case class PathField(
+    field: EntityFieldNode,
+    previousMultiplicity: MultiplicityBounds,
+    nextMultiplicity: MultiplicityBounds
+  )
+  type InvalidationPath = Seq[PathField]
+  case class FieldInvalidation(
+    field: FieldWithMultiplicity,
+    path: InvalidationPath
+  )
+  case class InvalidationFunction(field: EntityFieldNode, invalidations: Seq[FieldInvalidation], isDerivedValue: Boolean)
+  type Invalidations = Seq[InvalidationFunction]
+
+  def calculateDerivedValueInvalidations(model: AnalysisModel): AnalysisModel = {
+
+    object EdgeLabelImplicits extends LEdgeImplicits[List[EntityFieldNode]]
+    import EdgeLabelImplicits._
+
+    val invalidationFunctions: Invalidations =
+      for(field <- model.fields.values.toList) yield {
+        val node = model.graph.get(field.node)
+        logger.info(s"invalidating ${node.value}")
+        val paths: Seq[FieldInvalidation] = for(edge <- node.incoming.toSeq) yield {
+          val (multiplicity, path) = edge.label.foldLeft[(MultiplicityBounds, InvalidationPath)]((MultiplicityBounds.oneToOne, Seq.empty)){
+            case ((multiplicity, seq), relation) => {
+              val inverse = model.fields(relation).asInstanceOf[RelationNodeData].inverse
+              val inverseMultiplicity = model.fields(inverse).asInstanceOf[RelationNodeData].fieldType.multiplicity
+
+              val lubMultiplicity = MultiplicityBounds.lub(multiplicity, inverseMultiplicity)
+              (lubMultiplicity, seq :+ PathField(inverse, multiplicity, inverseMultiplicity))
+            }
+          }
+          FieldInvalidation(FieldWithMultiplicity(edge.from.value, multiplicity), path)
+        }
+        InvalidationFunction(field.node, paths, field.isInstanceOf[DerivedValueNodeData])
+      }
+    invalidationFunctions.map(invalidation.apply).foreach(println)
+    model
   }
 }

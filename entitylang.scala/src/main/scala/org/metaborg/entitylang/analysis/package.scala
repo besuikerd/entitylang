@@ -9,33 +9,30 @@ import org.metaborg.entitylang.lang.ast.MType.SMultiplicity
 import org.metaborg.scalaterms.sdf.Lexical
 import org.metaborg.scalaterms.{HasOrigin, TermLike}
 
-import scalax.collection.{Graph, GraphEdge}
+import scalax.collection.GraphEdge.{DiEdge, DiEdgeLike}
+import scalax.collection.Graph
+import scalax.collection.GraphPredef.{DiEdgeLikeIn, EdgeLikeIn}
+import scalax.collection.edge.LkDiEdge
 
 package object analysis {
-  type AnalysisEdgeType[T] = GraphEdge.DiEdge[T]
-  type AnalysisGraph = Graph[AnalysisGraphNode, AnalysisEdgeType]
+  type AnalysisEdgeType[T] = LkDiEdge[T]
+  type AnalysisGraph = Graph[EntityFieldNode, AnalysisEdgeType]
   type AnalysisNode = AnalysisGraph#NodeT
-  type AnalysisEdge = AnalysisGraph#EdgeT
+  type AnalysisEdge = AnalysisEdgeType[EntityFieldNode]
 
   @inline implicit def richAnalysisGraph(analysisGraph: AnalysisGraph) = new RichAnalysisGraph(analysisGraph)
   @inline implicit def richAnalysisNode(analysisNode: AnalysisNode) = new RichAnalysisNode(analysisNode)
 
-  sealed trait AnalysisGraphNode
-
-  case class EntityNode(name: String) extends AnalysisGraphNode
-  case class EntityNodeData(e: Entity2)
-
-  sealed trait EntityFieldNode extends AnalysisGraphNode{
-    val entity: String
-    val name: String
-  }
+  case class EntityFieldNode(
+    entity: String,
+    name: String
+  )
 
   sealed trait EntityFieldNodeData{
     type TermType <: TermLike with HasOrigin
     val fieldType: Type
     val node: EntityFieldNode
     val term: TermType
-
     val nameTerm: TermLike with HasOrigin
   }
 
@@ -45,23 +42,19 @@ package object analysis {
     }
   }
 
-  case class DerivedValueNode(entity: String, name: String) extends EntityFieldNode
   case class DerivedValueNodeData(fieldType: Type, node: EntityFieldNode, term: DerivedAttribute3) extends EntityFieldNodeData.Aux[DerivedAttribute3]{
     override val nameTerm: Lexical = term.id1
   }
 
-  case class AttributeNode(entity: String, name: String) extends EntityFieldNode
   case class AttributeNodeData(fieldType : Type, node: EntityFieldNode, term: Attribute2) extends EntityFieldNodeData.Aux[Attribute2]{
     override val nameTerm: TermLike with HasOrigin = term.id1
   }
 
-  case class RelationNode(entity: String, name: String) extends EntityFieldNode
-  case class RelationNodeData(fieldType: MultiplicityType[EntityType], entityRef: EntityRef1, attributeRef: AttributeRef1, multiplicity: SMultiplicity, node: EntityFieldNode, term: Relation6) extends EntityFieldNodeData.Aux[Relation6]{
+  case class RelationNodeData(fieldType: MultiplicityType[EntityType], entityRef: EntityRef1, attributeRef: AttributeRef1, multiplicity: SMultiplicity, node: EntityFieldNode, inverse: EntityFieldNode, term: Relation6) extends EntityFieldNodeData.Aux[Relation6]{
     override val nameTerm: TermLike with HasOrigin = attributeRef
   }
 
-  import scalax.collection.GraphEdge.DiEdge
-  def mutableSCC[V, E[V] <: DiEdge[V]](graph: Graph[V, E]): Seq[Either[Seq[Graph[V, E]#NodeT], Graph[V, E]#NodeT]] = {
+  def mutableSCC[V, E[V] <: EdgeLikeIn[V]](graph: Graph[V, E]): Seq[Either[Seq[Graph[V, E]#NodeT], Graph[V, E]#NodeT]] = {
     import scala.collection.mutable.ListBuffer
     class Vector(var node: Graph[V, E]#NodeT, var index: Int, var lowLink: Int, var onStack: Boolean){
       override def toString: String = node.toString()

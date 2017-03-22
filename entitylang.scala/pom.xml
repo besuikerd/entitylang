@@ -59,6 +59,11 @@
       <artifactId>graph-json_2.11</artifactId>
       <version>1.11.0</version>
     </dependency>
+    <dependency>
+      <groupId>com.typesafe.play</groupId>
+      <artifactId>twirl-api_2.11</artifactId>
+      <version>1.1.1</version>
+    </dependency>
   </dependencies>
 
   <repositories>
@@ -109,6 +114,20 @@
             <id>test</id>
             <goals>
               <goal>test</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>com.jakewharton.twirl</groupId>
+        <artifactId>twirl-maven-plugin</artifactId>
+        <version>1.0.5</version>
+        <executions>
+          <execution>
+            <phase>generate-sources</phase>
+            <goals>
+              <goal>compile</goal>
             </goals>
           </execution>
         </executions>

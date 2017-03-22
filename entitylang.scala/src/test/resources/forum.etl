@@ -1,0 +1,16 @@
+entity Author{
+  name: String
+  email: String
+
+  postCount = count(posts.title)
+  publicPosts = posts.filter((p: Post) => p.public)
+}
+
+entity Post {
+  title: String
+  visible: Boolean
+  content: String
+}
+
+
+relation Author.posts * <-> 1 Post.author

@@ -5,14 +5,11 @@ import org.metaborg.scalaterms.HasOrigin
 
 import scala.reflect.{ClassTag, classTag}
 
-trait TermTypingRule[TermType0 <: HasOrigin, TypeType0, T0] extends TypingRule{
-  override type TermType = TermType0
-  override type TypeType = TypeType0
-  override type T = T0
+trait TermTypingRule[TermType <: HasOrigin, TypeType, T] extends TypingRule[TermType, TypeType, T]{
 
   val term: HasOrigin
 
-  override def flatMap[U](f: (T0) => Rule[U])(implicit typeSystem: TypeSystemT): TermTypingRule[TermType, TypeType, U] =
+  override def flatMap[U](f: (T) => Rule[U])(implicit typeSystem: TypeSystemT): TermTypingRule[TermType, TypeType, U] =
     super.flatMap(f).bindTerm(term)
 
   override def map[U](f: T => U)(implicit typeSystem: TypeSystemT): TermTypingRule[TermType, TypeType, U] =
@@ -25,12 +22,12 @@ trait TermTypingRule[TermType0 <: HasOrigin, TypeType0, T0] extends TypingRule{
       typeRule.fail(term, message(t))
   }.bindTerm(term)
 
-  def fail(message: String)(implicit typeSystem: TypeSystemT): TermTypingRule[TermType0, TypeType0, T] =
+  def fail(message: String)(implicit typeSystem: TypeSystemT): TermTypingRule[TermType, TypeType, T] =
     typeRule.fail(term, message).bindTerm(term)
 
-  def ofType[U <: T : ClassTag](implicit typeSystem: TypeSystemT): TermTypingRule[TermType0, TypeType0, U] = ofType(None)
-  def ofType[U <: T : ClassTag](humanReadableName: String)(implicit typeSystem: TypeSystemT): TermTypingRule[TermType0, TypeType0, U] = ofType(Some(humanReadableName))
-  def ofType[U <: T : ClassTag](humanReadableName: Option[String])(implicit typeSystem: TypeSystemT): TermTypingRule[TermType0, TypeType0, U] = {
+  def ofType[U <: T : ClassTag](implicit typeSystem: TypeSystemT): TermTypingRule[TermType, TypeType, U] = ofType(None)
+  def ofType[U <: T : ClassTag](humanReadableName: String)(implicit typeSystem: TypeSystemT): TermTypingRule[TermType, TypeType, U] = ofType(Some(humanReadableName))
+  def ofType[U <: T : ClassTag](humanReadableName: Option[String])(implicit typeSystem: TypeSystemT): TermTypingRule[TermType, TypeType, U] = {
     val r = flatMap{ t =>
       val cls = classTag[U].runtimeClass.asInstanceOf[Class[U]]
       if(cls.isInstance(t))
@@ -41,7 +38,7 @@ trait TermTypingRule[TermType0 <: HasOrigin, TypeType0, T0] extends TypingRule{
     r.bindTerm(term)
   }
 
-  def ofType[U <: TypeType](t: U)(implicit typeSystem: TypeSystemT, subtype: T <:< TypeType): TermTypingRule[TermType0, TypeType0, U] = {
+  def ofType[U <: TypeType](t: U)(implicit typeSystem: TypeSystemT, subtype: T <:< TypeType): TermTypingRule[TermType, TypeType, U] = {
     val r = flatMap[U]{ t2 =>
       if (t == t2) {
         typeRule.success[U](t)

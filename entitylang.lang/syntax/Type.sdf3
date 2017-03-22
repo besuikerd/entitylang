@@ -5,7 +5,8 @@ imports
   
 context-free syntax
 
-  Type = PrimitiveType
+  Type.PrimitiveType = PrimitiveType
+  Type.EntityType = ID
   
   TypeWithMultiplicity.TypeWithMultiplicity = <<Type><Multiplicity>>
   TypeWithMultiplicity.TypeWithDefaultMultiplicity = Type

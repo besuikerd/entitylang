@@ -10,7 +10,7 @@ entity Character {
   baseWisdom       : Int
   baseCharisma     : Int
 
-  levelStrength = levelStrengthValue <+  0 
+  levelStrength = levelStrengthValue <+  0
   levelStrengthValue: Int?
   levelConstitution = levelConstitutionValue <+  0 
   levelConstitutionValue: Int?

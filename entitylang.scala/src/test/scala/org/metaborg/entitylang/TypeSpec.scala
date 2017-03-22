@@ -18,35 +18,6 @@ import scalax.collection.GraphPredef
 
 class TypeSpec extends FlatSpec{
 
-  "strongly connected components" should " be calculated correctly" in {
-
-    val program =
-      """
-        |entity A {
-        |  c = a + b
-        |  a: Int
-        |  b: Int
-        |  d = e + 1
-        |  e = d + 1
-        |}
-      """.stripMargin
-
-    val p2 =
-      """
-        |entity A {
-        | x: Boolean = y
-        | y = x
-        |}
-      """.stripMargin
-
-//    val ast = EntityLangParserProvider.parser.parse(p2)
-    val ast = EntityLangParserProvider.parser.parseResource("/test.etl")
-    val model = Analyzer.analyze(ast)
-    val scc = model.graph.stronglyConnectedComponents
-
-    scc.foreach(println)
-  }
-
   "Multiplicity bounds" should "have a correct partial ordering" in {
     assertResult(zeroToMany)(MultiplicityBounds.lub(zeroToMany, zeroToMany))
     assertResult(oneToMany)(MultiplicityBounds.lub(oneToMany, oneToMany))
@@ -250,14 +221,14 @@ class TypeSpec extends FlatSpec{
     illTyped("f(true)")
   }
 
-  def inferType(exp: SExp): TypingRule.Aux[SExp, Type, Type]#TypingResult =
+  def inferType(exp: SExp): TypingRule[SExp, Type, Type]#Result =
     ExpressionTypeSystem.infer(exp)
 
   def parseError(cause: SpoofaxParser.Error) = fail("Parse error: " + cause)
 
   def parse(exp: String): Either[SpoofaxParser.Error, SExp] = EntityLangParserProvider.expParser.tryParse(exp)
 
-  def inferType(exp: String): TypingRule.Aux[SExp, Type, Type]#TypingResult = parse(exp).fold(parseError, inferType)
+  def inferType(exp: String): TypingRule[SExp, Type, Type]#Result = parse(exp).fold(parseError, inferType)
 
   def wellTyped(exp: String) =
     inferType(exp).left.foreach(_.foreach(typeError))

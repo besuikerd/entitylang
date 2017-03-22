@@ -2,9 +2,8 @@ package org.metaborg.entitylang.analysis.types.typesystem.typingrule
 
 import org.metaborg.scalaterms.HasOrigin
 
-class FlatMappedTypingRule[TermType0 <: HasOrigin, TypeType0, T, U](rule: TypingRule.Aux[TermType0, TypeType0, T], f: T => TypingRule.Aux[TermType0, TypeType0, U]) extends TypingRule{
-  override type TermType = TermType0
-  override type TypeType = TypeType0
-  override type T = U
-  override def run(implicit typeSystem: TypeSystemT): TypingResult = rule.run.right.flatMap(t => f(t).run)
+class FlatMappedTypingRule[TermType <: HasOrigin, TypeType, T, U](rule: TypingRule[TermType, TypeType, T], f: T => TypingRule[TermType, TypeType, U]) extends TypingRule[TermType, TypeType, U]{
+  override def run(implicit typeSystem: TypeSystemT): Result = rule.run.right.flatMap{t =>
+    f(t.t).run.right.map(t2 => t2.copy(subTypes =  t2.subTypes ++ t.subTypes))
+  }
 }

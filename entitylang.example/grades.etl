@@ -1,9 +1,11 @@
 entity Student{
   name: String
-  compilation = submissions.assignment.name + submissions.grade
+  summary = "Student did " + count(submissions) + " submissions and averaged " + avgGrade + ". Pass percentage is " + passedPercentage
   
-  x: Float* = submissions
-  y = x.grade
+  passedCount = count(submissions.filter((s: Submission) => s.pass))
+  passedPercentage = passedCount / count(submissions)
+  
+  avgGrade = avg(submissions.grade)
 }
 
 entity Assignment{
@@ -13,12 +15,9 @@ entity Assignment{
 
 entity Submission{
   grade: Float?
-  pass: Boolean = grade >= assignment.minimum && forall(childPass) <+ false
-
+  pass: Boolean = grade >= assignment.minimum && conj(childPass) <+ false
   childPass = children.pass
   avg = avg(children.grade)
-
-  pass2 = pass || avg > 5.5
 }
 
 relation Submission.assignment 1 <-> * Assignment.submissions

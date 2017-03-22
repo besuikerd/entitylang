@@ -4,12 +4,12 @@ import org.metaborg.scalaterms.{Origin, STerm}
 import org.metaborg.scalaterms.spoofax.EditorMessage
 import org.metaborg.entitylang.analysis.types._
 
+import scala.reflect.{ClassTag, classTag}
 import scalax.collection.Graph
 
 case class AnalysisModel(
   graph: AnalysisGraph,
   fields: Map[EntityFieldNode, EntityFieldNodeData],
-  entities: Map[EntityNode, EntityNodeData],
   errors: Seq[EditorMessage] = Seq.empty
 ) {
 
@@ -23,6 +23,18 @@ case class AnalysisModel(
   def fieldType(entity: String, field: String): Option[Type] = fields.collectFirst{
     case (k, v) if k.entity == entity && k.name == field => v.fieldType
   }
+
+
+  def entityFieldOfType[T <: EntityFieldNodeData: ClassTag]: Seq[T] = {
+    val cls = classTag[T].runtimeClass.asInstanceOf[Class[T]]
+    fields.values.collect{
+      case f if cls.isInstance(f) => cls.cast(f)
+    }.toSeq
+  }
+
+  def derivedValues = entityFieldOfType[DerivedValueNodeData]
+  def attributes = entityFieldOfType[AttributeNodeData]
+  def relations = entityFieldOfType[RelationNodeData]
 
 
   def verifyUniqueField(field: EntityFieldNodeData): AnalysisModel = {
@@ -40,5 +52,5 @@ case class AnalysisModel(
 }
 
 object AnalysisModel {
-  val empty: AnalysisModel = AnalysisModel(Graph.empty, Map.empty, Map.empty)
+  val empty: AnalysisModel = AnalysisModel(Graph.empty, Map.empty)
 }

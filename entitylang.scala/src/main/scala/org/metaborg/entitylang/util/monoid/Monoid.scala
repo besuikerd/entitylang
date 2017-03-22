@@ -7,4 +7,5 @@ trait Monoid[T] {
 
 object Monoid{
   implicit def seqMonoid[T] = new SeqMonoid[T]
+  implicit def mapMonoid[K,V] = new MapMonoid[K,V]
 }

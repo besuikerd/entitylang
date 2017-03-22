@@ -19,7 +19,7 @@ package object typingrule {
       MultiplicityType(baseType, multiplicity) <- e.infer.ofType[MultiplicityType[BaseType]]("MultiplicityType")
       t2 <-
       if(cls.isInstance(baseType))
-        typeRule.success(MultiplicityType(cls.cast(baseType), multiplicity))
+        typeRule.success(e, MultiplicityType(cls.cast(baseType), multiplicity))
       else
         typeRule.fail[MultiplicityType[T]](e, s"Expected base type ${humanReadbleName.getOrElse(cls.getName)}, got: ${Type.ppBaseType(baseType)}" )
     } yield t2
@@ -31,7 +31,7 @@ package object typingrule {
       MultiplicityType(baseType2, multiplicity) <- e.infer.ofType[MultiplicityType[BaseType]]("MultiplicityType")
       t2 <-
         if(baseType == baseType2)
-          typeRule.success(MultiplicityType(baseType, multiplicity))
+          typeRule.success(e, MultiplicityType(baseType, multiplicity))
         else
           typeRule.fail[MultiplicityType[T]](e, s"Expected base type ${Type.ppBaseType(baseType)}, got: ${Type.ppBaseType(baseType2)}" )
     } yield t2
@@ -43,30 +43,30 @@ package object typingrule {
   def boundedMultiplicityType[T <: BaseType: ClassTag](e: SExp, upperBound: MultiplicityBounds)(implicit typeSystem: TypeSystem[SExp, Type]) =
     multiplicityType[T](e).flatMap{t => upperBounded(e, t, upperBound)}
 
-  def lub(o: HasOrigin, t1: MultiplicityType[BaseType], t2: MultiplicityType[BaseType])(implicit typeSystem: TypeSystem[SExp, Type], ord: Ordering[NumericType]): TypingRule.Aux[SExp, Type, MultiplicityType[BaseType]] = {
+  def lub(o: HasOrigin, t1: MultiplicityType[BaseType], t2: MultiplicityType[BaseType])(implicit typeSystem: TypeSystem[SExp, Type], ord: Ordering[NumericType]): TypingRule[SExp, Type, MultiplicityType[BaseType]] = {
     for {
       baseType <- lubBaseType(o, t1.baseType, t2.baseType)
-      multiplicity <- lubMultiplicity(o, t1.multiplicity, t2.multiplicity)
+      multiplicity <- lubMultiplicity(t1.multiplicity, t2.multiplicity)
     } yield MultiplicityType(baseType, multiplicity)
   }
 
-  def merge(o: HasOrigin, t1: MultiplicityType[BaseType], t2: MultiplicityType[BaseType])(implicit typeSystem: TypeSystem[SExp, Type]): TermTypingRule[SExp, Type, MultiplicityType[BaseType]] = {
+  def merge(o: HasOrigin, t1: MultiplicityType[BaseType], t2: MultiplicityType[BaseType])(implicit typeSystem: TypeSystem[SExp, Type]): TypingRule[SExp, Type, MultiplicityType[BaseType]] = {
     for{
       baseType <- lubBaseType(o, t1.baseType, t2.baseType)
       multiplicity = MultiplicityBounds.merge(t1.multiplicity, t2.multiplicity)
     } yield MultiplicityType(baseType, multiplicity)
   }
 
-  def lubBaseType(o: HasOrigin, t1: BaseType, t2: BaseType)(implicit typeSystem: TypeSystem[SExp, Type]): TermTypingRule[SExp, Type, BaseType] =
+  def lubBaseType(o: HasOrigin, t1: BaseType, t2: BaseType)(implicit typeSystem: TypeSystem[SExp, Type]): TypingRule[SExp, Type, BaseType] =
     if(BaseType.partialOrdering.gteq(t1, t2))
-      typeRule.success[BaseType](o, t1)
+      typeRule.success[BaseType](t1)
     else if(BaseType.partialOrdering.gteq(t2, t1))
-      typeRule.success[BaseType](o, t2)
+      typeRule.success[BaseType](t2)
     else
       typeRule.fail[BaseType](o, s"incompatible base types: ${Type.ppBaseType(t1)} <-> ${Type.ppBaseType(t2)}")
 
-  def lubMultiplicity(o: HasOrigin, m1: MultiplicityBounds, m2: MultiplicityBounds)(implicit typeSystem: TypeSystem[SExp, Type]): TermTypingRule[SExp, Type, MultiplicityBounds] =
-    typeRule.success(o, MultiplicityBounds.lub(m1, m2))
+  def lubMultiplicity(m1: MultiplicityBounds, m2: MultiplicityBounds)(implicit typeSystem: TypeSystem[SExp, Type]): TypingRule[SExp, Type, MultiplicityBounds] =
+    typeRule.success(MultiplicityBounds.lub(m1, m2))
 
   def maybeEmpty[T <: BaseType : ClassTag](e: SExp)(implicit typeSystem: TypeSystem[SExp, Type]): TermTypingRule[SExp, Type, MultiplicityType[T]] =
     multiplicityType[T](e, "Any")
@@ -83,7 +83,7 @@ package object typingrule {
     numeric(e).flatMap{t => upperBounded(e, t, upperBound)}
 
   def upperBounded[T <: BaseType](origin: HasOrigin, t: MultiplicityType[T], upperBound: MultiplicityBounds)(implicit typeSystem: TypeSystem[SExp, Type]): TermTypingRule[SExp, Type, MultiplicityType[T]] =
-    typeRule.success(origin, t).filter(
+    typeRule.success(t).bindTerm(origin).filter(
       _.multiplicity <= upperBound, t => s"invalid bounds, expected at most $upperBound, got ${t.multiplicity}"
     )
 
