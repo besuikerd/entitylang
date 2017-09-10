@@ -12,19 +12,19 @@
   <parent>
     <groupId>org.metaborg</groupId>
     <artifactId>parent.eclipse.language</artifactId>
-    <version>2.1.0-SNAPSHOT</version>
+    <version>2.1.0</version>
     <relativePath />
   </parent>
 
   <properties>
-    <lang.unpack.artifactId>entitylang</lang.unpack.artifactId>
+    <lang.unpack.artifactId>entitylang.lang</lang.unpack.artifactId>
     <lang.baseline.unpack.skip>true</lang.baseline.unpack.skip>
   </properties>
 
   <dependencies>
     <dependency>
       <groupId>${project.groupId}</groupId>
-      <artifactId>entitylang</artifactId>
+      <artifactId>entitylang.lang</artifactId>
       <version>${project.version}</version>
       <type>spoofax-language</type>
     </dependency>
@@ -66,7 +66,7 @@
     </repository>
     <repository>
       <id>spoofax-eclipse-repo</id>
-      <url>http://download.spoofax.org/update/nightly/</url>
+      <url>http://tinyurl.com/spoofax-eclipse-2-1-0</url>
       <layout>p2</layout>
       <releases>
         <enabled>false</enabled>

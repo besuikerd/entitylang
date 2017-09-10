@@ -1,0 +1,4 @@
+entity EmulateDefault{
+  field: String = fieldValue <+ "Default value" 
+  fieldValue: String?
+}

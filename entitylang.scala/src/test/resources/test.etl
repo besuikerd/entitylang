@@ -1,16 +1,35 @@
 entity Student{
   name: String
+
+  avg = avg(grades)
+  grades = submissions.grade
 }
 
 entity Assignment{
   name: String
-  minimum: Float
+  minimum: Float?
+  p = submissions.q
 }
 
 entity Submission{
-  grade: Float
-  pass: Float = grade >= assignment.minimum && childPass <+ false
-  childPass: Boolean = children.pass
+  grade: Float?
+  pass: Boolean = grade >= assignment.minimum && childPass <+ false
+  childPass = conj(children.pass)
+  
+  x = if(true) 5 else 5.0
+  
+  average = avg(children.grade)
+
+  q = assignment
+  
+  y: Int?
+  
+  bla = null
+  
+  z: Int = y <+ 5
+ 
+
+  pass2 = pass || average > 5.5
 }
 
 

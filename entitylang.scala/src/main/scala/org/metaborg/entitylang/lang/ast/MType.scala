@@ -14,18 +14,42 @@ object MType {
   sealed trait SType extends sdf.Constructor
   sealed trait STypeWithMultiplicity extends sdf.Constructor
   sealed trait SPrimitiveTypeWithMultiplicity extends sdf.Constructor
-  sealed trait SPrimitiveType extends sdf.Constructor with SType
+  sealed trait SPrimitiveType extends sdf.Constructor
   sealed trait SMultiplicity extends sdf.Constructor
   // Constructor definitions
   object SType extends scalaterms.TermLikeCompanion[SType] {
     override val fromSTerm: scalaterms.FromSTerm[SType] = new scalaterms.FromSTerm[SType] {
       override def unapply(term: STerm): Option[SType] = term match {
-        case SPrimitiveType.fromSTerm(_1) => scala.Some(_1)
+        case PrimitiveType1.fromSTerm(type1) => scala.Some(type1)
+        case EntityType1.fromSTerm(type1) => scala.Some(type1)
         case _ => scala.None
       }
     }
 
-
+    case class PrimitiveType1(primitivetype1: SPrimitiveType, origin: scalaterms.Origin) extends SType {
+      override def toSTerm = STerm.Cons("PrimitiveType", scala.Seq(primitivetype1.toSTerm), scala.Some(origin))
+    }
+    object PrimitiveType1 extends scalaterms.TermLikeCompanion[PrimitiveType1] {
+      override val fromSTerm: scalaterms.FromSTerm[PrimitiveType1] = new scalaterms.FromSTerm[PrimitiveType1] {
+        override def unapply(term: STerm): Option[PrimitiveType1] = term match {
+          case STerm.Cons("PrimitiveType", scala.Seq(SPrimitiveType.fromSTerm(primitivetype1)), scala.Some(origin)) =>
+            scala.Some(PrimitiveType1(primitivetype1, origin))
+          case _ => None
+        }
+      }
+    }
+    case class EntityType1(id1: SID, origin: scalaterms.Origin) extends SType {
+      override def toSTerm = STerm.Cons("EntityType", scala.Seq(id1.toSTerm), scala.Some(origin))
+    }
+    object EntityType1 extends scalaterms.TermLikeCompanion[EntityType1] {
+      override val fromSTerm: scalaterms.FromSTerm[EntityType1] = new scalaterms.FromSTerm[EntityType1] {
+        override def unapply(term: STerm): Option[EntityType1] = term match {
+          case STerm.Cons("EntityType", scala.Seq(SID.fromSTerm(id1)), scala.Some(origin)) =>
+            scala.Some(EntityType1(id1, origin))
+          case _ => None
+        }
+      }
+    }
   }
   object STypeWithMultiplicity extends scalaterms.TermLikeCompanion[STypeWithMultiplicity] {
     override val fromSTerm: scalaterms.FromSTerm[STypeWithMultiplicity] = new scalaterms.FromSTerm[STypeWithMultiplicity] {

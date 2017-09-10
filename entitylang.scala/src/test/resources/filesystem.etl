@@ -1,0 +1,18 @@
+entity File {
+  name: String
+  size: Int
+  
+  das = 1 + 2 + 3
+}
+
+entity Directory {
+  name: String
+  size: Int = sum(files.size) + sum(subDirectories.size)
+  
+  
+  x: Float? = null
+  allNames: String* = name ++ files.name ++ subDirectories.allNames  
+}
+
+relation File.directory 1 <-> * Directory.files
+relation Directory.parent ? <-> * Directory.subDirectories

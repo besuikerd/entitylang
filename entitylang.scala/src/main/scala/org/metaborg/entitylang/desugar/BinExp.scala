@@ -6,15 +6,32 @@ import org.metaborg.entitylang.lang.ast.MExpression.SExp._
 
 sealed trait BinaryOperator
 
-case object Add extends BinaryOperator
-case object Sub extends BinaryOperator
-case object Mul extends BinaryOperator
-case object Div extends BinaryOperator
+
+sealed trait NumericOperator {this: BinaryOperator =>}
+object NumericOperator{
+  def unapply(op: BinaryOperator): Option[NumericOperator] = op match{
+    case num: NumericOperator => Some(num)
+    case _ => None
+  }
+}
+
+sealed trait CompareOperator {this: BinaryOperator =>}
+object CompareOperator{
+  def unapply(op: BinaryOperator): Option[CompareOperator] = op match {
+    case compare: CompareOperator => Some(compare)
+    case _ => None
+  }
+}
+
+case object Add extends BinaryOperator with NumericOperator
+case object Sub extends BinaryOperator with NumericOperator
+case object Mul extends BinaryOperator with NumericOperator
+case object Div extends BinaryOperator with NumericOperator
 case object Mod extends BinaryOperator
-case object LessThan extends BinaryOperator
-case object LessThanEqual extends BinaryOperator
-case object GreaterThan extends BinaryOperator
-case object GreaterThanEqual extends BinaryOperator
+case object LessThan extends BinaryOperator with CompareOperator
+case object LessThanEqual extends BinaryOperator with CompareOperator
+case object GreaterThan extends BinaryOperator with CompareOperator
+case object GreaterThanEqual extends BinaryOperator with CompareOperator
 case object Equal extends BinaryOperator
 case object Inequal extends BinaryOperator
 case object And extends BinaryOperator
@@ -42,3 +59,4 @@ object BinExp{
     case _ => None
   }
 }
+

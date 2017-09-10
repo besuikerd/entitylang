@@ -1,0 +1,49 @@
+module pp
+
+imports
+
+  libstratego-gpp
+  libspoofax/sdf/pp
+  libspoofax/editor/refactoring/-
+  pp/EntitylangSyntax-parenthesize
+  pp/EntitylangSyntax-pp
+
+rules
+
+  editor-format:
+    (node, _, ast, path, project-path) -> (filename, result)
+    with
+      ext      := <get-extension> path
+    ; filename := <guarantee-extension(|$[pp.[ext]])> path
+    ; result   := <pp-debug> node
+
+rules
+
+  pp-EntitylangSyntax-string =
+    parenthesize-EntitylangSyntax
+    ; prettyprint-EntitylangSyntax-start-symbols
+    ; !V([], <id>)
+    ; box2text-string(|120)
+
+  pp-partial-EntitylangSyntax-string =
+    parenthesize-EntitylangSyntax
+    ; prettyprint-EntitylangSyntax
+    ; !V([], <id>)
+    ; box2text-string(|120)
+
+  pp-partial-EntitylangSyntax-string(|sort) =
+    parenthesize-EntitylangSyntax
+    ; prettyprint-EntitylangSyntax(|sort)
+    ; !V([], <id>)
+    ; box2text-string(|120)
+
+  pp-debug :
+    ast -> result
+    with
+       result := <pp-EntitylangSyntax-string> ast
+    <+ <bottomup(try(not(is-string); not(is-list); not(pp-EntitylangSyntax-string); debug(!"cannot pp ")))> ast
+    ;  result := ""
+
+rules
+
+  construct-textual-change = construct-textual-change(pp-partial-EntitylangSyntax-string, parenthesize, override-reconstruction, resugar)

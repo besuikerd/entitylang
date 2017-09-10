@@ -21,10 +21,6 @@ class TrivialSpec extends FlatSpec
       case BinExp(Add, e1, e2) => println(s"adding $e1 and $e2")
     }
 
-
-
-
-
     assertResult(42)(42)
   }
 }

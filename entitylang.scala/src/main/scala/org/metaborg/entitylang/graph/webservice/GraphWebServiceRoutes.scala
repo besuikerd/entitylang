@@ -6,8 +6,10 @@ import akka.http.scaladsl.server.Directives
 trait GraphWebServiceRoutes extends Directives with GraphWebsocketHandler{
   val route =
       path("graph"){
-        get{
-          wsRoute
+        withoutRequestTimeout{
+          get{
+            wsRoute
+          }
         }
       } ~
       pathPrefix("public"){

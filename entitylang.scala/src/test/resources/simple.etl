@@ -1,0 +1,22 @@
+entity A{
+  amount: Int
+  weight: Float
+  value: Float = sum(childAmount) + amount * weight
+
+  childAmount = children.amount
+
+  x: Int
+  y: Int+
+  z = sum(y) + x
+
+  f: Boolean
+  childF = children.f
+  g: Boolean = conj(childF)
+
+  a = b
+  b = c
+  c = d
+  d: Int+
+}
+
+relation A.parent 1 <-> + A.children

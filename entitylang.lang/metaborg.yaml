@@ -5,6 +5,7 @@ dependencies:
   compile:
   - org.metaborg:org.metaborg.meta.lang.esv:${metaborgVersion}
   - org.metaborg:org.metaborg.meta.lang.template:${metaborgVersion}
+  - org.metaborg:entitylang.syntax:0.1.0-SNAPSHOT
   source:
   - org.metaborg:meta.lib.spoofax:${metaborgVersion}
   - org.metaborg:org.metaborg.meta.lib.analysis:${metaborgVersion}
@@ -32,3 +33,5 @@ language:
     - stratego-sdf
     - -la
     - strc
+build:
+  useBuildSystemSpec: true

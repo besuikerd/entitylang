@@ -1,22 +1,68 @@
 Start(
-  [ Entity("Student", [Attribute("name", PrimitiveTypeWithDefaultMultiplicity(String()))])
+  [ Entity(
+      "Student"
+    , [ Attribute("name", PrimitiveTypeWithDefaultMultiplicity(String()))
+      , DerivedAttribute(
+          "summary"
+        , DerivedType()
+        , Addition(
+            Addition(
+              Addition(
+                String("\"Student did \"")
+              , Apply(Ref("count"), [Ref("submissions")])
+              )
+            , String("\" submissions and averaged \"")
+            )
+          , Ref("avgGrade")
+          )
+        )
+      , DerivedAttribute(
+          "avgGrade"
+        , DerivedType()
+        , Apply(Ref("avg"), [MemberAccess(Ref("submissions"), "grade")])
+        )
+      , DerivedAttribute(
+          "dsa"
+        , DerivedType()
+        , MethodCall(
+            MemberAccess(Ref("submissions"), "student")
+          , "filter"
+          , [ Lambda(
+                [LambdaParameter("s", EntityType("Submission"))]
+              , MethodCall(
+                  MemberAccess(MemberAccess(Ref("s"), "bla"), "dsa")
+                , "filter"
+                , [Lambda([LambdaParameter("x", PrimitiveType(Int()))], True())]
+                )
+              )
+            ]
+          )
+        )
+      ]
+    )
   , Entity(
       "Assignment"
     , [Attribute("name", PrimitiveTypeWithDefaultMultiplicity(String())), Attribute("minimum", PrimitiveTypeWithMultiplicity(Float(), ZeroOrOne()))]
     )
   , Entity(
       "Submission"
-    , [ Attribute("grade", PrimitiveTypeWithDefaultMultiplicity(Float()))
+    , [ Attribute("grade", PrimitiveTypeWithMultiplicity(Float(), ZeroOrOne()))
       , DerivedAttribute(
           "pass"
         , ExplicitType(PrimitiveTypeWithDefaultMultiplicity(Boolean()))
         , ChoiceLeft(
             And(
               GreaterThanEqual(Ref("grade"), MemberAccess(Ref("assignment"), "minimum"))
-            , Apply(Ref("forall"), [MemberAccess(Ref("children"), "pass")])
+            , Apply(Ref("conj"), [Ref("childPass")])
             )
           , False()
           )
+        )
+      , DerivedAttribute("childPass", DerivedType(), MemberAccess(Ref("children"), "pass"))
+      , DerivedAttribute(
+          "avg"
+        , DerivedType()
+        , Apply(Ref("avg"), [MemberAccess(Ref("children"), "grade")])
         )
       ]
     )
