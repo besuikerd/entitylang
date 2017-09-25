@@ -1,56 +1,60 @@
 var path = require('path');
 var webpack = require('webpack');
+
 var ExtractTextPlugin = require('extract-text-webpack-plugin');
-var autoprefixer = require('autoprefixer');
 
 module.exports = {
 
-  entry: {
-    index: 'index.js'
-  },
+    entry: 'index',
 
-  output: {
-    path: 'dist/',
-    publicPath: 'http://localhost:3000/',
-    filename: '[name].js',
-    chunkFilename: '[chunkhash].js'
-  },
+    output: {
+        path: path.join(__dirname, 'dist/'),
+        filename: '[name].js'
+    },
 
-  module: {
-    loaders: [
-      {
-        test: /\.js$/,
-        exclude: /node_modules/,
-        loader: 'babel',
-        query: {
-          presets: ['es2015']
-        }
-      },
+    module: {
+        rules: [
+            {
+                test: /\.(css|scss)$/,
+                use: ExtractTextPlugin.extract({
+                    fallback: 'style-loader'
+                    , use: ['css-loader', 'sass-loader']
+                })
+            },
 
-      {
-        test: /(\.scss|\.css)$/,
-        loader: ExtractTextPlugin.extract('style-loader', 'css-loader!postcss-loader!sass-loader')
-      },
+            {
+                test: /\.(eot|woff|woff2|ttf|svg|png|jpe?g|gif)(\?\S*)?$/,
+                use: [
+                    {
+                        loader:  'url-loader',
+                        options: {
+                            limit: 100000,
+                            name: '[name].[ext]'
+                        }
+                    }
+                ]
+            }
+        ]
+    },
 
-      {
-        test: require.resolve('d3'),
-        loader: 'imports-loader?d3'
-      }
-    ]
-  },
-  postcss: [autoprefixer],
+    devtool: 'inline-source-map',
+    resolve: {
+        modules: [
+            path.join(__dirname, 'node_modules'),
+            path.join(__dirname, 'js')
+        ]
+    },
 
-  resolve: {
-    modulesDirectories: [
-      'node_modules',
-      path.join(__dirname, 'js')
-    ]
-  },
+    plugins: [
+        new ExtractTextPlugin('[name].css')
+      , new webpack.ProvidePlugin({
+            d3: 'd3'
+        })
+    ],
 
-  plugins: [
-    new ExtractTextPlugin('[name].css'),
-    new webpack.ProvidePlugin({
-      d3: 'd3!'
-    })
-  ]
+    devServer: {
+        publicPath: '/target',
+        port: 9000
+    }
+
 };
