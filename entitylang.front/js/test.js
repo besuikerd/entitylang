@@ -1,0 +1,3 @@
+function inline(s){}
+
+
