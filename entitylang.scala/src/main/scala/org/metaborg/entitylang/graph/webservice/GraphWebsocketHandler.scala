@@ -34,8 +34,7 @@ trait GraphWebsocketHandler {
       }
       case None => {
         val url = getClass.getResource("/graph.html")
-        //        val path = new File(url.toURI).toPath
-        val path = new File("/home/nick/projects/spoofax/entitylang/entitylang.scala/src/main/resources/graph.html").toPath
+        val path = new File(url.toURI).toPath
         val html =  scala.io.Source.fromURL(url).getLines().mkString("")
         ctx.complete(
           HttpResponse(

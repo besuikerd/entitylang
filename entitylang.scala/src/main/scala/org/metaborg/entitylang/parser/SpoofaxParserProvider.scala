@@ -9,6 +9,8 @@ trait SpoofaxParserProvider extends ParserProvider[SpoofaxParser.Error] {
   private val spoofax = new Spoofax()
   private val languagePath = spoofax.resourceService.resolve(languageLocation)
   private val languageRequest = spoofax.languageDiscoveryService.request(languagePath)
+  println(languagePath)
+  println(languageRequest)
   private val lang = spoofax.languageDiscoveryService.discover(languageRequest).iterator().next()
   private val langImpl = spoofax.languageService.getImpl(lang.config().identifier())
 
